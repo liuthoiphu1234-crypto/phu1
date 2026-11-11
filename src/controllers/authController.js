@@ -15,9 +15,8 @@ const generateToken = (id) => {
 // [POST] /api/auth/register - Đăng ký tài khoản
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, address } = req.body;
 
-    // Kiểm tra dữ liệu đầu vào
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -25,9 +24,7 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Kiểm tra email đã tồn tại
     const existing = await User.findOne({ email });
-
     if (existing) {
       return res.status(400).json({
         success: false,
@@ -35,16 +32,15 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Tạo tài khoản mới
     const user = await User.create({
       name,
       email,
       password,
-      phone,
+      phone: phone || '',
+      address: address || '',
       role: 'customer'
     });
 
-    // Tạo Token
     const token = generateToken(user._id);
 
     res.status(201).json({
@@ -55,6 +51,8 @@ exports.register = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
+        address: user.address,
         role: user.role
       }
     });
@@ -71,7 +69,6 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Kiểm tra dữ liệu đầu vào
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -79,10 +76,8 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Tìm User theo email
     const user = await User.findOne({ email });
 
-    // Kiểm tra email và mật khẩu
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({
         success: false,
@@ -90,7 +85,13 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Tạo Token
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'Tài khoản của bạn đã bị tạm khóa. Vui lòng liên hệ quản trị viên Blushé Beauty!'
+      });
+    }
+
     const token = generateToken(user._id);
 
     res.status(200).json({
@@ -101,6 +102,8 @@ exports.login = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
+        address: user.address,
         role: user.role
       }
     });
@@ -119,4 +122,84 @@ exports.getMe = async (req, res) => {
     message: 'Lấy thông tin tài khoản thành công',
     data: req.user
   });
+};
+
+// [PUT] /api/auth/update-profile - Cập nhật thông tin cá nhân
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, phone, address } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy tài khoản!'
+      });
+    }
+
+    if (name) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+    if (address !== undefined) user.address = address;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật thông tin thành công!',
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// [PUT] /api/auth/change-password - Đổi mật khẩu
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng cung cấp mật khẩu hiện tại và mật khẩu mới!'
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user || !(await user.matchPassword(currentPassword))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mật khẩu hiện tại không chính xác!'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mật khẩu mới phải từ 6 ký tự trở lên!'
+      });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Đổi mật khẩu thành công!'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 };

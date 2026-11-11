@@ -1,212 +1,781 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cửa Hàng Trực Tuyến - LHU E-Commerce Store</title>
-  <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BLUSHÉ BEAUTY | Mỹ Phẩm & Chăm Sóc Sắc Đẹp Hữu Cơ Cao Cấp</title>
+
+  <!-- Google Fonts: Playfair Display & Montserrat -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet" />
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
-  <!-- 1. Header & Thanh Điều Hướng -->
+  <!-- 1. TOP ANNOUNCEMENT BAR -->
+  <div class="top-bar">
+    🌿 Miễn phí vận chuyển toàn quốc đơn từ 500.000đ • Nhập mã <strong style="color:var(--color-accent);">BLUSHE10</strong> giảm ngay 10%
+  </div>
+
+  <!-- 2. HEADER -->
   <header>
     <div class="container nav-container">
-      <a href="index.html" class="brand-logo">
-        🛒 LHU Store <span class="brand-badge">TMĐT 2026</span>
+      <!-- Brand Logo -->
+      <a href="index.html" class="brand-logo-wrap">
+        <div>
+          <span class="brand-logo">Blushé Beauty</span>
+          <span class="brand-tagline">Luxury Organic Skincare</span>
+        </div>
       </a>
 
-      <!-- Ô Tìm kiếm nhanh -->
-      <div class="search-box">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" class="search-input" placeholder="Tìm sản phẩm bạn quan tâm...">
-      </div>
+      <!-- Navigation Links -->
+      <ul class="nav-links">
+        <li><a href="#home" class="active">Trang Chủ</a></li>
+        <li><a href="#products">Sản Phẩm</a></li>
+        <li><a href="#flashSale">Flash Sale</a></li>
+        <li><a href="#brandStory">Về Blushé</a></li>
+        <li><a href="#brands">Thương Hiệu</a></li>
+        <li><a href="#testimonials">Đánh Giá</a></li>
+        <li><a href="#footer">Liên Hệ</a></li>
+      </ul>
 
-      <!-- Nút Giỏ hàng & Link Admin -->
-      <div class="header-actions">
-        <button class="btn-cart-toggle" onclick="openCartDrawer()">
-          🛍️ Giỏ hàng <span class="cart-badge" id="cartBadge">0</span>
+      <!-- Navigation Actions -->
+      <div class="nav-actions">
+        <!-- Search Box -->
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Tìm kiếm mỹ phẩm..." />
+        </div>
+
+        <!-- Tra cứu đơn hàng -->
+        <button class="btn-icon-action" onclick="openTrackOrderModal()" title="Tra cứu tình trạng đơn hàng">
+          📦
         </button>
-        <a href="admin.html" class="btn-admin-link">⚙️ Quản Trị</a>
+
+        <!-- Tài khoản / Đăng nhập -->
+        <button class="btn-icon-action" id="btnUserAccount" onclick="handleUserAccountClick()" title="Tài khoản khách hàng">
+          👤
+        </button>
+
+        <!-- Giỏ hàng -->
+        <button class="btn-icon-action" onclick="toggleCartDrawer()" title="Giỏ hàng">
+          🛒
+          <span class="cart-badge" id="cartBadge">0</span>
+        </button>
+
+        <!-- Nút chuyển tới Trang Admin -->
+        <a href="admin.html" class="btn-nav-admin" title="Truy cập Bảng Quản trị Admin">
+          ⚙️ Admin
+        </a>
       </div>
     </div>
   </header>
 
-  <!-- 2. Hero Banner Giới Thiệu -->
-  <section class="hero-banner">
-    <div class="container hero-content">
-      <span class="hero-tag">🌟 Khám phá bộ sưu tập mới nhất</span>
-      <h1 class="hero-title">Mua Sắm Trực Tuyến Tiện Lợi & Thông Minh</h1>
-      <p class="hero-desc">Sản phẩm chính hãng, giao hàng toàn quốc và hỗ trợ tư vấn tự động cùng Trợ lý ảo AI 24/7.</p>
+  <!-- 3. HERO BANNER -->
+  <section class="hero-banner" id="home">
+    <div class="container hero-grid">
+      <div class="hero-content">
+        <div class="hero-subtag">
+          ✦ Tinh Hoa Thiên Nhiên & Khoa Học Làn Da ✦
+        </div>
+        <h1 class="hero-title">
+          Vẻ Đẹp Rạng Ngời Từ <br /><span>Nguồn Dưỡng Chất Hữu Cơ</span>
+        </h1>
+        <p class="hero-desc">
+          Blushé Beauty mang đến những liệu trình chăm sóc da đẳng cấp với thành phần thuần chay hữu cơ chọn lọc từ châu Âu. Nuôi dưỡng làn da căng mọng, tươi trẻ và ngập tràn sức sống mỗi ngày.
+        </p>
+        <div class="hero-btn-group">
+          <a href="#products" class="btn-primary">
+            Khám Phá Bộ Sưu Tập →
+          </a>
+          <a href="#brandStory" class="btn-secondary">
+            Triết Lý Làm Đẹp
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-image-wrap">
+        <img
+          src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=800&auto=format&fit=crop"
+          alt="Blushé Beauty Organic Skincare"
+          class="hero-img"
+        />
+        <div class="hero-badge-float">
+          <div class="badge-circle">🌿</div>
+          <div>
+            <div style="font-weight:700;font-size:13px;color:var(--text-main);">100% Organic & Cruelty Free</div>
+            <div style="font-size:11px;color:var(--text-muted);">Cam kết an toàn tuyệt đối cho mọi làn da</div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- 3. Khu vực Lọc Danh Mục & Danh Sách Sản Phẩm -->
-  <main class="container">
-    <!-- Thanh lọc Danh mục -->
-    <div class="category-section">
-      <div class="category-pills" id="categoryPills">
-        <button class="cat-pill active" data-id="">Tất cả</button>
+  <!-- 4. VALUES PROPOSITION BAR -->
+  <section class="values-bar">
+    <div class="container values-grid">
+      <div class="value-item">
+        <div class="value-icon">✨</div>
+        <div>
+          <div class="value-title">Mỹ Phẩm Cao Cấp 100%</div>
+          <div class="value-desc">Cam kết chính hãng & có kiểm định</div>
+        </div>
+      </div>
+      <div class="value-item">
+        <div class="value-icon">🚚</div>
+        <div>
+          <div class="value-title">Giao Hàng Toàn Quốc</div>
+          <div class="value-desc">Miễn phí ship cho đơn từ 500k</div>
+        </div>
+      </div>
+      <div class="value-item">
+        <div class="value-icon">🔄</div>
+        <div>
+          <div class="value-title">Đổi Trả An Tâm Trong 7 Ngày</div>
+          <div class="value-desc">Hỗ trợ nếu da bị kích ứng</div>
+        </div>
+      </div>
+      <div class="value-item">
+        <div class="value-icon">💬</div>
+        <div>
+          <div class="value-title">Tư Vấn Da 24/7 Cùng AI</div>
+          <div class="value-desc">Trợ lý soi da & gợi ý sản phẩm</div>
+        </div>
       </div>
     </div>
+  </section>
 
-    <!-- Danh sách sản phẩm -->
-    <section class="products-section">
+  <!-- 5. FLASH SALE & COUNTDOWN TIMER -->
+  <section class="flash-sale-section" id="flashSale">
+    <div class="container">
+      <div class="flash-sale-card">
+        <div class="flash-header">
+          <div class="flash-icon">⚡</div>
+          <div>
+            <h3 class="flash-title">Flash Sale Mỹ Phẩm Organic Trong Ngày</h3>
+            <div class="flash-subtitle">Ưu đãi giảm giá tới 35% cho các tinh chất dưỡng da cao cấp độc quyền</div>
+          </div>
+        </div>
+
+        <div class="countdown-box">
+          <div class="countdown-unit">
+            <div class="countdown-num" id="cdHours">08</div>
+            <div class="countdown-label">Giờ</div>
+          </div>
+          <div class="countdown-divider">:</div>
+          <div class="countdown-unit">
+            <div class="countdown-num" id="cdMinutes">45</div>
+            <div class="countdown-label">Phút</div>
+          </div>
+          <div class="countdown-divider">:</div>
+          <div class="countdown-unit">
+            <div class="countdown-num" id="cdSeconds">30</div>
+            <div class="countdown-label">Giây</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. CATEGORIES VISUAL SECTION -->
+  <section class="category-section">
+    <div class="container">
       <div class="section-header">
-        <h2 class="section-title">Danh Sách Sản Phẩm</h2>
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <span id="productCount" style="font-size: 13px; color: #64748b;">Đang tải...</span>
-          <select id="sortSelect" class="sort-select">
-            <option value="">Sắp xếp: Mặc định</option>
-            <option value="price_asc">Giá: Thấp đến Cao</option>
-            <option value="price_desc">Giá: Cao đến Thấp</option>
+        <span class="section-tag">Bộ Sưu Tập</span>
+        <h2 class="section-title">Danh Mục Sản Phẩm</h2>
+        <p class="section-desc">Lựa chọn giải pháp hoàn hảo cho từng bước trong chu trình chăm sóc sắc đẹp toàn diện.</p>
+      </div>
+
+      <!-- Categories Visual Cards -->
+      <div class="category-slider" id="categoryCards">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Category Filter Pills (11 Danh mục) -->
+      <div class="category-pills" id="categoryPills">
+        <button class="cat-pill active" data-id="">Tất cả sản phẩm</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. PRODUCTS SECTION (3 SẢN PHẨM / HÀNG TRÊN DESKTOP) -->
+  <section class="products-section" id="products">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Sản Phẩm Nổi Bật</span>
+        <h2 class="section-title">Tinh Hoa Chăm Sóc Da Blushé</h2>
+        <p class="section-desc">Những sản phẩm được phái đẹp yêu thích nhất với công thức làm đẹp vượt trội.</p>
+      </div>
+
+      <!-- Toolbar Lọc & Sắp xếp -->
+      <div class="filter-toolbar">
+        <div style="font-size:13px;color:var(--text-muted);">
+          Hiển thị: <strong id="productCount" style="color:var(--color-accent);">0</strong> sản phẩm
+        </div>
+
+        <div class="filter-options">
+          <!-- Lọc Thương hiệu -->
+          <select id="brandFilter" class="filter-select" onchange="handleBrandChange(this.value)">
+            <option value="">-- Mọi thương hiệu --</option>
+            <option value="Blushé Naturals">Blushé Naturals</option>
+            <option value="La Mer">La Mer</option>
+            <option value="Estée Lauder">Estée Lauder</option>
+            <option value="SK-II">SK-II</option>
+            <option value="Dior Beauty">Dior Beauty</option>
+            <option value="Chanel">Chanel</option>
+            <option value="Sulwhasoo">Sulwhasoo</option>
+            <option value="Kiehl's">Kiehl's</option>
+          </select>
+
+          <!-- Lọc Loại da -->
+          <select id="skinTypeFilter" class="filter-select" onchange="handleSkinTypeChange(this.value)">
+            <option value="">-- Mọi loại da --</option>
+            <option value="Mọi loại da">Mọi loại da</option>
+            <option value="Da nhạy cảm">Da nhạy cảm</option>
+            <option value="Da dầu">Da dầu / mụn</option>
+            <option value="Da khô">Da khô / mất nước</option>
+            <option value="Da lão hóa">Da lão hóa</option>
+          </select>
+
+          <!-- Sắp xếp -->
+          <select id="sortSelect" class="filter-select" onchange="handleSortChange(this.value)">
+            <option value="newest">Mới nhất</option>
+            <option value="best_seller">Bán chạy nhất</option>
+            <option value="price_asc">Giá tăng dần</option>
+            <option value="price_desc">Giá giảm dần</option>
+            <option value="rating_desc">Đánh giá cao nhất</option>
           </select>
         </div>
       </div>
 
+      <!-- Responsive Product Grid: 3 cols desktop, 2 tablet, 1 mobile -->
       <div class="product-grid" id="productGrid">
-        <!-- Render động bằng JS -->
+        <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+          <div style="font-size:24px;margin-bottom:10px;">🌿</div>
+          <p style="color:var(--text-muted);">Đang tải sản phẩm mỹ phẩm Blushé Beauty...</p>
+        </div>
       </div>
-    </section>
-  </main>
+    </div>
+  </section>
 
-  <!-- 4. Giỏ Hàng Trượt (Cart Drawer) -->
-  <div class="cart-drawer-backdrop" id="cartBackdrop" onclick="closeCartDrawer()"></div>
+  <!-- 8. BRAND STORY SECTION (VỀ BLUSHÉ BEAUTY) -->
+  <section class="brand-story-section" id="brandStory">
+    <div class="container story-grid">
+      <div class="story-img-collage">
+        <img
+          src="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop"
+          alt="Câu chuyện thương hiệu Blushé Beauty"
+          class="story-main-img"
+        />
+      </div>
+
+      <div class="story-content">
+        <span class="section-tag">Câu Chuyện Của Chúng Tôi</span>
+        <h2>Luxury Organic Beauty – Tôn Vinh Vẻ Đẹp Thuần Khiết Tự Nhiên</h2>
+        <p>
+          Thành lập với niềm đam mê bất tận dành cho sự hoàn mỹ của làn da, <strong>Blushé Beauty</strong> ra đời như một bản giao hưởng ngọt ngào giữa thiên nhiên tinh khiết và công nghệ làm đẹp hiện đại từ Pháp.
+        </p>
+        <p>
+          Chúng tôi tin rằng, mỗi làn da đều xứng đáng được nâng niu bằng những giọt dưỡng chất hữu cơ lành tính nhất. Từng lọ serum, hũ kem dưỡng hay thỏi son tại Blushé đều trải qua quy trình nghiên cứu khắt khe, không chứa paraben, không hương liệu tổng hợp độc hại, an toàn tuyệt đối cho người sử dụng.
+        </p>
+
+        <div class="story-highlights">
+          <div class="highlight-box">
+            <h4>🌿 100% Thuần Chay Hữu Cơ</h4>
+            <p>Chiết xuất từ hoa cỏ thảo mộc organic chuẩn chứng nhận quốc tế.</p>
+          </div>
+          <div class="highlight-box">
+            <h4>🔬 Công Nghệ Sinh Học Tiên Tiến</h4>
+            <p>Tối ưu hóa độ thẩm thấu sâu đến từng lớp tế bào da.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. BRANDS SHOWCASE SECTION -->
+  <section class="brands-showcase-section" id="brands">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Đối Tác Danh Tiếng</span>
+        <h2 class="section-title">Thương Hiệu Đồng Hành</h2>
+        <p class="section-desc">Blushé Beauty phân phối chính hãng các thương hiệu mỹ phẩm và chăm sóc sắc đẹp hàng đầu thế giới.</p>
+      </div>
+
+      <div class="brand-logos-grid" id="brandLogosGrid">
+        <div class="brand-logo-item">
+          <div class="brand-logo-name">Blushé Naturals</div>
+          <div class="brand-logo-origin">Pháp (Hữu Cơ)</div>
+        </div>
+        <div class="brand-logo-item">
+          <div class="brand-logo-name">La Mer</div>
+          <div class="brand-logo-origin">Hoa Kỳ (Cao Cấp)</div>
+        </div>
+        <div class="brand-logo-item">
+          <div class="brand-logo-name">Estée Lauder</div>
+          <div class="brand-logo-origin">Hoa Kỳ</div>
+        </div>
+        <div class="brand-logo-item">
+          <div class="brand-logo-name">SK-II</div>
+          <div class="brand-logo-origin">Nhật Bản</div>
+        </div>
+        <div class="brand-logo-item">
+          <div class="brand-logo-name">Dior Beauty</div>
+          <div class="brand-logo-origin">Pháp</div>
+        </div>
+        <div class="brand-logo-item">
+          <div class="brand-logo-name">Chanel</div>
+          <div class="brand-logo-origin">Pháp</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. TESTIMONIALS / CUSTOMER REVIEWS -->
+  <section class="testimonials-section" id="testimonials">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Khách Hàng Nói Về Blushé</span>
+        <h2 class="section-title">Hơn 10.000+ Phụ Nữ Tin Dùng</h2>
+        <p class="section-desc">Cảm nhận thực tế từ những quý cô đã trải nghiệm và thay đổi làn da cùng Blushé Beauty.</p>
+      </div>
+
+      <div class="testimonials-grid">
+        <div class="testimonial-card">
+          <div class="testimonial-rating">★★★★★</div>
+          <p class="testimonial-text">
+            "Sữa rửa mặt và kem chống nắng Blushé làm mình mê mẩn ngay từ lần dùng đầu tiên. Da nhạy cảm như mình dùng không hề bị châm chích, kiềm dầu rất tốt mà da vẫn mịn màng căng bóng."
+          </p>
+          <div class="testimonial-author">
+            <div class="author-avatar">MP</div>
+            <div>
+              <div class="author-name">Mai Phương</div>
+              <div class="author-status">Khách hàng thân thiết • TP. HCM</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="testimonial-rating">★★★★★</div>
+          <p class="testimonial-text">
+            "Serum Estée Lauder và Nước thần SK-II tại shop cam kết chuẩn hàng chính hãng. Đóng gói hộp hoa rất tinh tế và sang trọng, quét mã VietQR thanh toán nhanh chóng chỉ vài giây."
+          </p>
+          <div class="testimonial-author">
+            <div class="author-avatar">BT</div>
+            <div>
+              <div class="author-name">Bảo Trâm</div>
+              <div class="author-status">Khách hàng VIP • Hà Nội</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="testimonial-rating">★★★★★</div>
+          <p class="testimonial-text">
+            "Trợ lý AI tư vấn da trên website cực kỳ thông minh! Mình hỏi loại serum phù hợp da dầu thiếu nước là được gợi ý chính xác kèm cách thoa chi tiết. Rất hài lòng với dịch vụ chuyên nghiệp."
+          </p>
+          <div class="testimonial-author">
+            <div class="author-avatar">TH</div>
+            <div>
+              <div class="author-name">Thu Hằng</div>
+              <div class="author-status">Khách hàng • Biên Hòa, Đồng Nai</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11. FOOTER -->
+  <footer id="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3>BLUSHÉ BEAUTY</h3>
+          <p>
+            Thương hiệu thương mại điện tử chuyên kinh doanh mỹ phẩm và giải pháp chăm sóc sắc đẹp hữu cơ cao cấp. Mang đến làn da rạng ngời thanh xuân với sự an toàn tuyệt đối.
+          </p>
+          <div style="font-size:12px;color:var(--text-light);">
+            © 2026 Blushé Beauty E-Commerce Store. Bảo lưu mọi quyền.
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>Về Blushé</h4>
+          <ul class="footer-links">
+            <li><a href="#brandStory">Câu chuyện thương hiệu</a></li>
+            <li><a href="#products">Danh mục mỹ phẩm</a></li>
+            <li><a href="#brands">Thương hiệu phân phối</a></li>
+            <li><a href="#testimonials">Đánh giá khách hàng</a></li>
+            <li><a href="admin.html">Cổng Quản trị Admin</a></li>
+            <li><a href="customers.html">Quản trị Khách hàng</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Chính Sách & Hỗ Trợ</h4>
+          <ul class="footer-links">
+            <li><a href="javascript:void(0)" onclick="alert('Chính sách giao hàng: Miễn phí toàn quốc cho đơn từ 500k, thời gian giao từ 2-3 ngày làm việc.')">Chính sách vận chuyển</a></li>
+            <li><a href="javascript:void(0)" onclick="alert('Chính sách đổi trả: Đổi trả miễn phí trong 7 ngày nếu sản phẩm lỗi từ nhà sản xuất hoặc kích ứng da.')">Chính sách đổi trả 7 ngày</a></li>
+            <li><a href="javascript:void(0)" onclick="alert('Cam kết bảo mật: Mọi thông tin khách hàng và giao dịch thanh toán đều được mã hóa an toàn tuyệt đối.')">Bảo mật thông tin</a></li>
+            <li><a href="javascript:void(0)" onclick="alert('Thanh toán an toàn: Hỗ trợ thanh toán quét mã VietQR ngân hàng Quân Đội MB, ví MoMo và tiền mặt COD.')">Hướng dẫn thanh toán</a></li>
+            <li><a href="javascript:void(0)" onclick="openTrackOrderModal()">Tra cứu vận đơn</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Liên Hệ Với Chúng Tôi</h4>
+          <div class="footer-contact-info">
+            <p>📍 Số 88 Đồng Khởi, Bến Nghé, Quận 1, TP. Hồ Chí Minh</p>
+            <p>📞 Hotline CSKH: <strong>0365 187 193</strong></p>
+            <p>✉️ Email hỗ trợ: <strong>contact@blushe.vn</strong></p>
+            <p>⏰ Giờ làm việc: 8:00 - 21:30 hàng ngày</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>Hệ thống Thương Mại Điện Tử Mỹ Phẩm Blushé Beauty • Đồ án tốt nghiệp / Học phần LHU TMĐT</div>
+        <div>Phương thức thanh toán hỗ trợ: VietQR Napas 247 • Ví MoMo • Tiền mặt COD</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==========================================================
+       MODALS & SLIDE DRAWERS
+       ========================================================== -->
+
+  <!-- A. CART DRAWER (GIỎ HÀNG TRƯỢT) -->
+  <div class="cart-backdrop" id="cartBackdrop" onclick="toggleCartDrawer()"></div>
   <div class="cart-drawer" id="cartDrawer">
     <div class="cart-header">
-      <h3 class="cart-title">🛍️ Giỏ Hàng Của Bạn</h3>
-      <button class="btn-close" onclick="closeCartDrawer()">✕</button>
+      <h3 class="serif-font">Giỏ Hàng Của Bạn</h3>
+      <button class="btn-close" onclick="toggleCartDrawer()">✕</button>
     </div>
+
     <div class="cart-body" id="cartItemsBody">
-      <!-- Render động danh sách món hàng -->
+      <!-- Rendered by JS -->
     </div>
+
     <div class="cart-footer">
-      <div class="cart-subtotal">
-        <span>Tổng cộng:</span>
-        <span id="cartSubtotal" style="color: #ef4444;">0 đ</span>
+      <!-- Ô nhập mã giảm giá -->
+      <div class="cart-coupon-input-wrap">
+        <input type="text" id="couponCodeInput" placeholder="Nhập mã: BLUSHE10, NANGNIU50..." />
+        <button type="button" onclick="handleApplyCoupon()">Áp Dụng</button>
       </div>
-      <button class="btn-checkout-start" onclick="openCheckoutModal()">
-        Tiến Hành Đặt Hàng ➔
+      <div id="appliedCouponNotice" style="font-size:11.5px;color:var(--color-accent);margin-bottom:8px;display:none;"></div>
+
+      <div class="cart-summary-line">
+        <span>Tạm tính hàng:</span>
+        <span id="cartSubtotal">0 đ</span>
+      </div>
+      <div class="cart-summary-line" id="discountLine" style="display:none; color:#C26B6B;">
+        <span>Giảm giá voucher:</span>
+        <span id="cartDiscountAmount">-0 đ</span>
+      </div>
+      <div class="cart-summary-line">
+        <span>Phí vận chuyển:</span>
+        <span id="cartShippingFee">25.000 đ</span>
+      </div>
+      <div class="cart-summary-total">
+        <span>Tổng thanh toán:</span>
+        <span id="cartTotal">0 đ</span>
+      </div>
+
+      <button class="btn-checkout-full" onclick="openCheckoutModal()">
+        Tiến Hành Đặt Hàng →
       </button>
     </div>
   </div>
 
-  <!-- 5. Modal Đặt Hàng (Checkout Form) -->
+  <!-- B. CHECKOUT MODAL (FORM THANH TOÁN) -->
   <div class="modal-overlay hidden" id="checkoutModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="font-size: 18px; font-weight: bold;">📝 Thông Tin Giao Hàng & Thanh Toán</h3>
+        <h3 class="serif-font" style="font-size:20px;">Thông Tin Giao Hàng & Đặt Hàng</h3>
         <button class="btn-close" onclick="closeCheckoutModal()">✕</button>
       </div>
+
       <div class="modal-body">
         <form id="checkoutForm" onsubmit="handleCheckoutSubmit(event)">
           <div class="form-group">
-            <label class="form-label">Họ và Tên (*)</label>
-            <input type="text" name="customerName" class="form-input" placeholder="Ví dụ: Nguyễn Văn An" required>
+            <label class="form-label">Họ và tên người nhận (*)</label>
+            <input type="text" name="customerName" id="orderCustomerName" class="form-input" required placeholder="Ví dụ: Nguyễn Thị Lan" />
           </div>
-          <div style="display: flex; gap: 12px;">
-            <div class="form-group" style="flex: 1;">
-              <label class="form-label">Số Điện Thoại (*)</label>
-              <input type="tel" name="customerPhone" class="form-input" placeholder="09xxxxxxxx" required>
+
+          <div style="display:flex;gap:14px;">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Số điện thoại (*)</label>
+              <input type="tel" name="customerPhone" id="orderCustomerPhone" class="form-input" required placeholder="0901234567" />
             </div>
-            <div class="form-group" style="flex: 1;">
-              <label class="form-label">Email (*)</label>
-              <input type="email" name="customerEmail" class="form-input" placeholder="an@gmail.com" required>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Email nhận hóa đơn (*)</label>
+              <input type="email" name="customerEmail" id="orderCustomerEmail" class="form-input" required placeholder="lan.nguyen@gmail.com" />
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Địa Chỉ Nhận Hàng (*)</label>
-            <input type="text" name="shippingAddress" class="form-input" placeholder="Số nhà, Tên đường, Phường, Quận/Huyện, Tỉnh/TP" required>
+
+          <div style="display:flex;gap:14px;">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Tỉnh / Thành phố (*)</label>
+              <select name="province" id="orderProvince" class="form-select" onchange="handleProvinceChange(this.value)">
+                <option value="Hồ Chí Minh">TP. Hồ Chí Minh (20k)</option>
+                <option value="Đồng Nai">Đồng Nai / Biên Hòa (20k)</option>
+                <option value="Hà Nội">Hà Nội (35k)</option>
+                <option value="Đà Nẵng">Đà Nẵng (30k)</option>
+                <option value="Khác">Tỉnh thành khác (30k)</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Phí ship dự kiến</label>
+              <input type="text" id="displayShippingFee" class="form-input" value="20.000 đ" readonly style="background:#F2EDE2;font-weight:600;" />
+            </div>
           </div>
+
           <div class="form-group">
-            <label class="form-label">Phương Thức Thanh Toán (*)</label>
-            <select name="paymentMethod" class="form-select" required>
-              <option value="COD">💵 Thanh toán tiền mặt khi nhận hàng (COD)</option>
-              <option value="VIETQR">📲 Chuyển khoản Ngân hàng (Mã VietQR)</option>
-              <option value="MOMO_QR">🟣 Ví Điện Tử MoMo (Quét mã QR)</option>
+            <label class="form-label">Địa chỉ nhận hàng chi tiết (*)</label>
+            <input type="text" name="shippingAddress" id="orderShippingAddress" class="form-input" required placeholder="Số nhà, tên đường, phường/xã, quận/huyện..." />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phương thức thanh toán</label>
+            <select name="paymentMethod" id="orderPaymentMethod" class="form-select">
+              <option value="VIETQR">Chuyển khoản Ngân hàng Quân Đội MB (VietQR Napas 247)</option>
+              <option value="MOMO_QR">Ví điện tử MoMo (Quét mã QR)</option>
+              <option value="COD">Thanh toán khi nhận hàng (COD)</option>
             </select>
           </div>
+
           <div class="form-group">
-            <label class="form-label">Ghi Chú Đơn Hàng</label>
-            <input type="text" name="note" class="form-input" placeholder="Ghi chú thêm cho người giao hàng...">
+            <label class="form-label">Ghi chú cho đơn hàng (tùy chọn)</label>
+            <textarea name="note" class="form-textarea" rows="2" placeholder="Ghi chú về thời gian giao hàng hoặc chỉ dẫn đường..."></textarea>
           </div>
-          <button type="submit" id="btnSubmitOrder" class="btn-checkout-start">
-            Xác Nhận Đặt Hàng
+
+          <div style="background:var(--bg-sage);padding:14px;border-radius:var(--radius-sm);margin-bottom:18px;font-size:13px;display:flex;justify-content:space-between;font-weight:700;">
+            <span>Tổng thanh toán đơn hàng:</span>
+            <span id="checkoutFinalTotal" style="color:var(--color-accent);font-size:16px;">0 đ</span>
+          </div>
+
+          <button type="submit" id="btnSubmitOrder" class="btn-checkout-full">
+            Xác Nhận Đặt Mua
           </button>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- 6. Modal Thanh Toán QR (VietQR / MoMo) -->
+  <!-- C. MODAL THANH TOÁN QR (BẢO TOÀN NGUYÊN VẸN MÃ QR VÀ THÔNG TIN NGÂN HÀNG) -->
   <div class="modal-overlay hidden" id="qrModal">
-    <div class="modal-content" style="max-width: 440px; text-align: center;">
+    <div class="modal-content qr-modal-content">
       <div class="modal-header">
-        <h3 style="font-size: 17px; font-weight: bold;">📲 Quét Mã QR Để Thanh Toán</h3>
+        <h3 class="serif-font" style="font-size:19px;">Mã QR Thanh Toán Đơn Hàng</h3>
         <button class="btn-close" onclick="closeQRModal()">✕</button>
       </div>
+
       <div class="modal-body">
+        <div style="font-size:13px;color:var(--text-muted);">
+          Đơn hàng: <strong id="qrOrderCode" style="color:var(--color-accent);font-size:15px;">#DH...</strong>
+        </div>
+
         <div class="qr-preview-box">
-          <img id="qrImage" src="" alt="Mã QR Thanh Toán" class="qr-img">
-          <p style="font-size: 13px; color: #64748b; margin-bottom: 8px;">Mở ứng dụng Ngân hàng hoặc MoMo để quét mã</p>
-          <div style="font-size: 14px; margin-bottom: 4px;">Đơn hàng: <strong id="qrOrderCode">#...</strong></div>
-          <div style="font-size: 18px; font-weight: bold; color: #ef4444; margin-bottom: 6px;">Số tiền: <span id="qrTotalAmount">0 đ</span></div>
-          <div style="font-size: 12px; background: #e0f2fe; color: #0284c7; padding: 6px; border-radius: 6px;" id="qrNoteInfo">
-            Nội dung CK: DH ...
+          <img id="qrImage" src="" alt="Mã QR Thanh Toán Blushé Beauty" class="qr-img" />
+          <div class="qr-instruction">
+            Mở ứng dụng Ngân hàng (App Mobile Banking) hoặc MoMo để quét mã tự động điền số tiền và nội dung.
           </div>
         </div>
-        <button class="btn-checkout-start" onclick="closeQRModal()">
-          ✓ Tôi Đã Hoàn Tất Chuyển Khoản
-        </button>
-      </div>
-    </div>
-  </div>
 
-  <!-- 7. Modal Xem Chi Tiết Sản Phẩm -->
-  <div class="modal-overlay hidden" id="productDetailModal">
-    <div class="modal-content" style="max-width: 600px;">
-      <div class="modal-header">
-        <h3 style="font-size: 17px; font-weight: bold;">Chi Tiết Sản Phẩm</h3>
-        <button class="btn-close" onclick="closeProductDetailModal()">✕</button>
-      </div>
-      <div class="modal-body" id="productDetailContent">
-        <!-- Render động thông tin sản phẩm -->
-      </div>
-    </div>
-  </div>
+        <div class="qr-bank-details">
+          <div>
+            <span>Ngân hàng thụ hưởng:</span>
+            <strong>MB Bank (Quân Đội)</strong>
+          </div>
+          <div>
+            <span>Số tài khoản:</span>
+            <strong id="qrAccountNo" style="letter-spacing:1px;">0365187193</strong>
+          </div>
+          <div>
+            <span>Chủ tài khoản:</span>
+            <strong>LIU THOI PHU</strong>
+          </div>
+          <div>
+            <span>Số tiền thanh toán:</span>
+            <strong id="qrTotalAmount" style="color:#C26B6B;font-size:14px;">0 đ</strong>
+          </div>
+          <div>
+            <span>Nội dung chuyển khoản:</span>
+            <strong id="qrNoteInfo" style="color:var(--color-accent);">DH...</strong>
+          </div>
+        </div>
 
-  <!-- 8. Widget Trợ Lý AI Gemini Nổi Góc Màn Hình -->
-  <button class="ai-widget-button" onclick="toggleAIChat()" title="Chat với Trợ lý AI">
-    🤖
-  </button>
-  <div class="ai-chat-window hidden" id="aiChatWindow">
-    <div class="ai-chat-header">
-      <div class="ai-chat-title">
-        <span>🤖</span>
-        <div>
-          <div>LHU AI Assistant</div>
-          <div style="font-size: 11px; font-weight: normal; opacity: 0.85;">Trợ lý tư vấn sản phẩm thông minh</div>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button type="button" class="btn-secondary" style="flex:1;" onclick="closeQRModal()">
+            Đóng Cửa Sổ
+          </button>
+          <button type="button" class="btn-primary" style="flex:1;" onclick="handleConfirmPaymentClick()">
+            Đã Chuyển Tiền ✓
+          </button>
         </div>
       </div>
-      <button class="btn-close" style="color: #fff;" onclick="toggleAIChat()">✕</button>
     </div>
-    <div class="ai-chat-messages" id="aiMessages">
-      <div class="msg msg-ai">
-        Dạ em chào bạn! Em là Trợ lý ảo AI của cửa hàng. Bạn đang tìm mua sản phẩm nào hay cần em tư vấn gì không ạ? 😊
-      </div>
-    </div>
-    <form class="ai-chat-input-area" onsubmit="sendAIMessage(event)">
-      <input type="text" id="aiInput" class="ai-chat-input" placeholder="Hỏi AI về sản phẩm..." autocomplete="off">
-      <button type="submit" class="ai-chat-send">➤</button>
-    </form>
   </div>
 
-  <!-- 9. Footer -->
-  <footer>
-    <div class="container">
-      <p style="margin-bottom: 6px;"><strong>Đồ Án Môn Học:</strong> Lập trình ứng dụng (Mã HP: 112175) — Khoa CNTT — Trường Đại học Lạc Hồng (LHU)</p>
-      <p style="font-size: 13px;">Hệ thống Backend RESTful API kết nối Cơ sở dữ liệu MongoDB Atlas & Trợ lý ảo AI Google Gemini</p>
+  <!-- D. MODAL CHI TIẾT SẢN PHẨM (ĐẦY ĐỦ THÀNH PHẦN, CÔNG DỤNG, LOẠI DA, XUẤT XỨ) -->
+  <div class="modal-overlay hidden" id="productDetailModal">
+    <div class="modal-content product-detail-modal-content">
+      <div class="modal-header">
+        <span class="detail-brand" id="modalBrand">BLUSHÉ NATURALS</span>
+        <button class="btn-close" onclick="closeProductDetailModal()">✕</button>
+      </div>
+
+      <div class="modal-body" id="productDetailContent">
+        <!-- Rendered by JS -->
+      </div>
     </div>
-  </footer>
+  </div>
+
+  <!-- E. MODAL ĐĂNG NHẬP / ĐĂNG KÝ -->
+  <div class="modal-overlay hidden" id="authModal">
+    <div class="modal-content" style="max-width:440px;">
+      <div class="modal-header">
+        <h3 class="serif-font" id="authModalTitle" style="font-size:20px;">Đăng Nhập Tài Khoản</h3>
+        <button class="btn-close" onclick="closeAuthModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Tab chuyển đổi Đăng nhập / Đăng ký -->
+        <div style="display:flex;border-bottom:1px solid var(--border-light);margin-bottom:20px;">
+          <button type="button" id="tabAuthLogin" class="detail-tab-btn active" onclick="switchAuthTab('login')" style="flex:1;">ĐĂNG NHẬP</button>
+          <button type="button" id="tabAuthRegister" class="detail-tab-btn" onclick="switchAuthTab('register')" style="flex:1;">ĐĂNG KÝ MỚI</button>
+        </div>
+
+        <!-- Form Đăng nhập -->
+        <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+          <div class="form-group">
+            <label class="form-label">Email đăng nhập</label>
+            <input type="email" name="email" class="form-input" required placeholder="admin@blushe.vn hoặc email của bạn" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mật khẩu</label>
+            <input type="password" name="password" class="form-input" required placeholder="••••••••" />
+          </div>
+          <button type="submit" class="btn-checkout-full" style="margin-top:10px;">
+            Đăng Nhập Ngay
+          </button>
+          <div style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:14px;line-height:1.6;">
+            🛡️ Admin: <strong>admin@blushe.vn</strong> / <strong>admin123</strong><br/>
+            🛍️ Khách hàng: <strong>khachhang@gmail.com</strong> / <strong>123456</strong>
+          </div>
+        </form>
+
+        <!-- Form Đăng ký -->
+        <form id="registerForm" style="display:none;" onsubmit="handleRegisterSubmit(event)">
+          <div class="form-group">
+            <label class="form-label">Họ và tên (*)</label>
+            <input type="text" name="name" class="form-input" required placeholder="Ví dụ: Hoàng Mai" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email (*)</label>
+            <input type="email" name="email" class="form-input" required placeholder="mai.hoang@gmail.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Số điện thoại</label>
+            <input type="tel" name="phone" class="form-input" placeholder="0987654321" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mật khẩu (*)</label>
+            <input type="password" name="password" class="form-input" required minlength="6" placeholder="Tối thiểu 6 ký tự" />
+          </div>
+          <button type="submit" class="btn-checkout-full" style="margin-top:10px;">
+            Tạo Tài Khoản Thành Viên
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- F. MODAL TÀI KHOẢN KHÁCH HÀNG (HỒ SƠ, LỊCH SỬ MUA HÀNG) -->
+  <div class="modal-overlay hidden" id="userAccountModal">
+    <div class="modal-content" style="max-width:720px;">
+      <div class="modal-header">
+        <h3 class="serif-font" style="font-size:20px;">Tài Khoản Khách Hàng</h3>
+        <button class="btn-close" onclick="closeUserAccountModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div id="userAccountContent">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- G. MODAL TRA CỨU ĐƠN HÀNG (ORDER TRACKING) -->
+  <div class="modal-overlay hidden" id="trackOrderModal">
+    <div class="modal-content" style="max-width:540px;">
+      <div class="modal-header">
+        <h3 class="serif-font" style="font-size:20px;">Tra Cứu Tình Trạng Đơn Hàng</h3>
+        <button class="btn-close" onclick="closeTrackOrderModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <form onsubmit="handleTrackOrderSubmit(event)">
+          <div class="form-group">
+            <label class="form-label">Nhập Mã đơn hàng (Ví dụ: DH12345678)</label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="trackOrderInput" class="form-input" required placeholder="DH..." style="text-transform:uppercase;" />
+              <button type="submit" class="btn-primary" style="white-space:nowrap;padding:10px 20px;">Tra Cứu</button>
+            </div>
+          </div>
+        </form>
+
+        <div id="trackOrderResult" style="margin-top:20px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- H. WIDGET TRỢ LÝ ẢO AI GEMINI TƯ VẤN SẮC ĐẸP BLUSHÉ BEAUTY -->
+  <button class="ai-chat-btn" onclick="toggleAIChat()" title="Trò chuyện cùng Chuyên viên tư vấn AI Blushé Beauty">
+    🌸
+  </button>
+
+  <div class="ai-chat-window hidden" id="aiChatWindow">
+    <div class="ai-chat-header">
+      <div class="ai-chat-header-info">
+        <div class="ai-avatar-badge">
+          🌿
+          <span class="ai-status-dot" title="Đang trực tuyến"></span>
+        </div>
+        <div class="ai-chat-title">
+          <span class="ai-chat-name">Blushé Beauty AI</span>
+          <span class="ai-chat-status"><span style="color:#2E7D32;">●</span> Trực tuyến • Sẵn sàng tư vấn</span>
+        </div>
+      </div>
+      <button class="btn-close" onclick="toggleAIChat()" style="color:var(--text-main); font-size: 16px;">✕</button>
+    </div>
+
+    <div class="ai-chat-messages" id="aiMessages">
+      <div class="msg msg-ai">
+        Chào bạn! Em là <strong>Blushé Beauty AI</strong> - chuyên viên tư vấn sắc đẹp và mỹ phẩm hữu cơ cao cấp 🌿.<br><br>
+        Bạn đang tìm kiếm giải pháp cho tình trạng da nào (da dầu, da khô, da nhạy cảm...) hoặc cần gợi ý sản phẩm nào cứ nhắn cho em nhé! 🌸
+      </div>
+    </div>
+
+    <!-- Quick Suggestion Pills -->
+    <div class="ai-quick-pills" id="aiQuickPills">
+      <button class="ai-pill-btn" onclick="sendQuickMessage('Da dầu mụn nên dùng sản phẩm nào?')">🌿 Da dầu mụn</button>
+      <button class="ai-pill-btn" onclick="sendQuickMessage('Tư vấn kem chống nắng cho da nhạy cảm')">☀️ Kem chống nắng</button>
+      <button class="ai-pill-btn" onclick="sendQuickMessage('Hiện tại có mã giảm giá nào?')">🎁 Mã giảm giá</button>
+      <button class="ai-pill-btn" onclick="sendQuickMessage('Quy trình skincare buổi tối gồm những bước nào?')">🌙 Skincare tối</button>
+      <button class="ai-pill-btn" onclick="sendQuickMessage('Kiểm tra đơn hàng của tôi')">📦 Đơn hàng của tôi</button>
+    </div>
+
+    <form class="ai-chat-input-bar" onsubmit="sendAIMessage(event)">
+      <input type="text" id="aiInput" placeholder="Hỏi AI: Tư vấn serum cho da nhạy cảm..." autocomplete="off" />
+      <button type="submit">Gửi</button>
+    </form>
+  </div>
 
   <!-- Scripts -->
   <script src="js/api.js"></script>

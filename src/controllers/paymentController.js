@@ -1,7 +1,6 @@
-
 const Order = require('../models/Order');
 
-// [POST] /api/payment/create-qr - Tạo mã thanh toán QR động
+// [POST] /api/payment/create-qr - Tạo mã thanh toán QR động (VietQR / MoMo)
 exports.createPaymentQR = async (req, res) => {
     try {
         const { orderId, paymentMethod } = req.body;
@@ -23,15 +22,15 @@ exports.createPaymentQR = async (req, res) => {
             const bankId = process.env.BANK_ID || 'MB';
             const accountNo = process.env.BANK_ACCOUNT_NO || '0365187193';
             const accountName = encodeURIComponent(
-                process.env.BANK_ACCOUNT_NAME || 'LHU ECOMMERCE STORE'
+                process.env.BANK_ACCOUNT_NAME || 'LIU THOI PHU'
             );
             const addInfo = encodeURIComponent(`DH ${orderCode}`);
 
-            https:'//img.vietqr.io/image/MB-0365187193-compact.png'
+            qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${totalAmount}&addInfo=${addInfo}&accountName=${accountName}`;
         } else if (paymentMethod === 'MOMO_QR') {
             // 2. Mã QR MoMo
             const momoPhone = process.env.MOMO_PHONE || '0365187193';
-            const momoName = encodeURIComponent('LHU STORE');
+            const momoName = encodeURIComponent('BLUSHE BEAUTY');
             const momoData = encodeURIComponent(
                 `2|99|${momoPhone}|${momoName}||0|0|${totalAmount}|DH ${orderCode}|transfer_myqr`
             );
@@ -48,6 +47,9 @@ exports.createPaymentQR = async (req, res) => {
                 totalAmount,
                 paymentMethod: paymentMethod || 'VIETQR',
                 qrUrl,
+                bankId: process.env.BANK_ID || 'MB',
+                accountNo: process.env.BANK_ACCOUNT_NO || '0365187193',
+                accountName: process.env.BANK_ACCOUNT_NAME || 'LIU THOI PHU',
                 transferNote: `DH ${orderCode}`
             }
         });

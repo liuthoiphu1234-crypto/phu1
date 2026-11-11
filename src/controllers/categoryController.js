@@ -36,13 +36,46 @@ exports.createCategory = async (req, res) => {
     const category = await Category.create({
       name,
       slug,
-      description,
-      image,
+      description: description || '',
+      image: image || 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=500',
     });
 
     res.status(201).json({
       success: true,
       message: 'Tạo danh mục mới thành công',
+      data: category,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// [PUT] /api/categories/:id - Cập nhật danh mục
+exports.updateCategory = async (req, res) => {
+  try {
+    const { name, description, image } = req.body;
+    const updateData = {};
+    if (name) {
+      updateData.name = name;
+      updateData.slug = name.toLowerCase().replace(/\s+/g, '-');
+    }
+    if (description !== undefined) updateData.description = description;
+    if (image) updateData.image = image;
+
+    const category = await Category.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy danh mục để cập nhật!',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật danh mục thành công',
       data: category,
     });
   } catch (error) {

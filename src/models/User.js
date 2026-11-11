@@ -8,7 +8,6 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Họ và tên không được để trống'],
       trim: true
     },
-
     email: {
       type: String,
       required: [true, 'Email không được để trống'],
@@ -16,22 +15,31 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true
     },
-
     password: {
       type: String,
       required: [true, 'Mật khẩu không được để trống'],
       minlength: [6, 'Mật khẩu phải từ 6 ký tự trở lên']
     },
-
     phone: {
       type: String,
       default: ''
     },
-
+    address: {
+      type: String,
+      default: ''
+    },
+    avatar: {
+      type: String,
+      default: ''
+    },
     role: {
       type: String,
       enum: ['customer', 'admin'],
       default: 'customer'
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false
     }
   },
   {
@@ -39,11 +47,9 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Tự động mã hóa mật khẩu trước khi lưu CSDL (pre-save hook)
-// ✅ Bỏ tham số `next` và không gọi `next()` khi dùng async function
+// Tự động mã hóa mật khẩu trước khi lưu CSDL
 userSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
-
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });

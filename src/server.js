@@ -11,6 +11,13 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const shippingRoutes = require("./routes/shippingRoutes");
 
+// Các tuyến API bổ sung cho hệ sinh thái Blushé Beauty
+const userRoutes = require("./routes/userRoutes");
+const brandRoutes = require("./routes/brandRoutes");
+const couponRoutes = require("./routes/couponRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -26,7 +33,8 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     status: "OK",
-    message: "Hệ thống Quản lý Đơn hàng hoạt động ổn định!",
+    message: "Hệ sinh thái E-Commerce Blushé Beauty hoạt động ổn định!",
+    timestamp: new Date()
   });
 });
 
@@ -39,6 +47,13 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/shipping", shippingRoutes);
 
+// Định tuyến API bổ sung
+app.use("/api/users", userRoutes);
+app.use("/api/brands", brandRoutes);
+app.use("/api/coupons", couponRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/analytics", analyticsRoutes);
+
 // 5. Bắt lỗi 404
 app.use((req, res) => {
   res.status(404).json({
@@ -50,8 +65,9 @@ app.use((req, res) => {
 // 6. Khởi chạy Server
 app.listen(PORT, () => {
   console.log("====================================================");
-  console.log(`🚀 Server Tuần 05 đang chạy tại: http://localhost:${PORT}`);
+  console.log(`🌸 Blushé Beauty Backend Server đang chạy tại: http://localhost:${PORT}`);
   console.log(`🛒 Test Đặt hàng: POST http://localhost:${PORT}/api/orders`);
   console.log(`📋 Test Danh sách đơn: GET http://localhost:${PORT}/api/orders`);
+  console.log(`✨ Báo cáo Quản trị: GET http://localhost:${PORT}/api/analytics/dashboard`);
   console.log("====================================================");
 });
