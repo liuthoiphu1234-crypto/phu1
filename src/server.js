@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const connectDB = require("./config/db");
 
 const authRoutes = require("./routes/authRoutes");
@@ -29,6 +30,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Phục vụ toàn bộ giao diện Frontend tĩnh từ thư mục frontend_template
+const frontendPath = path.join(__dirname, "../frontend_template");
+app.use(express.static(frontendPath));
+
 // 3. Health Check
 app.get("/api/health", (req, res) => {
   res.status(200).json({
@@ -54,12 +59,28 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
-// 5. Bắt lỗi 404
+// Các tuyến đường dẫn giao diện HTML trực tiếp
+app.get("/", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
+
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(frontendPath, "admin.html"));
+});
+
+app.get("/customers", (req, res) => {
+  res.sendFile(path.join(frontendPath, "customers.html"));
+});
+
+// 5. Bắt lỗi 404 (Nếu là /api thì trả JSON, nếu là trang web thì trả về index.html)
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Đường dẫn [${req.method}] ${req.originalUrl} không tồn tại!`,
-  });
+  if (req.path.startsWith("/api")) {
+    return res.status(404).json({
+      success: false,
+      message: `Đường dẫn [${req.method}] ${req.originalUrl} không tồn tại!`,
+    });
+  }
+  res.status(404).sendFile(path.join(frontendPath, "index.html"));
 });
 
 // 6. Khởi chạy Server

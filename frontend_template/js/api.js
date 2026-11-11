@@ -1,11 +1,14 @@
 /**
  * ==========================================================
  * CẤU HÌNH KẾT NỐI API BACKEND CHO BLUSHÉ BEAUTY E-COMMERCE
- * Khi deploy online lên Render / Railway / VPS, chỉ cần thay đổi đường link này:
- * const API_BASE_URL = 'https://dia-chi-backend-cua-ban.onrender.com/api';
+ * Tự động tương thích:
+ * - Localhost Live Server (port 5500) -> kết nối http://localhost:5000/api
+ * - Deploy Render.com / Production  -> kết nối /api (cùng domain máy chủ)
  * ==========================================================
  */
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port === '5500'
+  ? 'http://localhost:5000/api'
+  : '/api';
 
 const API = {
   // 1. DANH MỤC (CATEGORIES)
