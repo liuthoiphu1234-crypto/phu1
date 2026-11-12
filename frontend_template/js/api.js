@@ -1,14 +1,29 @@
 /**
  * ==========================================================
  * CẤU HÌNH KẾT NỐI API BACKEND CHO BLUSHÉ BEAUTY E-COMMERCE
- * Tự động tương thích:
- * - Localhost Live Server (port 5500) -> kết nối http://localhost:5000/api
- * - Deploy Render.com / Production  -> kết nối /api (cùng domain máy chủ)
+ * Tự động thích ứng thông minh đa môi trường:
+ * 1. Chạy trên Render.com -> dùng '/api'
+ * 2. Chạy trên localhost cổng 5000 -> dùng '/api'
+ * 3. Chạy trên Live Server (5500, 5501...) hoặc file HTML cục bộ -> Tự động kết nối Cloud Backend Render đang hoạt động
  * ==========================================================
  */
-const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port === '5500'
-  ? 'http://localhost:5000/api'
-  : '/api';
+const RENDER_ONLINE_API = 'https://phu1-2.onrender.com/api';
+
+const API_BASE_URL = (() => {
+  if (typeof window === 'undefined') return 'http://localhost:5000/api';
+  
+  // 1. Đang truy cập trực tiếp trên Render
+  if (window.location.hostname.includes('onrender.com')) {
+    return '/api';
+  }
+  // 2. Đang chạy từ Node.js server local port 5000
+  if (window.location.port === '5000') {
+    return '/api';
+  }
+  // 3. Mở từ Live Server (cổng 5500, 5501...) hoặc file máy tính:
+  // Kết nối trực tiếp tới máy chủ Cloud Render để đảm bảo 100% luôn hoạt động kể cả khi chưa bật port 5000 ở local
+  return RENDER_ONLINE_API;
+})();
 
 const API = {
   // 1. DANH MỤC (CATEGORIES)
