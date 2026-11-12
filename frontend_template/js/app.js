@@ -690,7 +690,31 @@ function handleUserAccountClick() {
   }
 }
 
+// Xử lý khi bấm vào Quản trị viên (Chỉ Admin mới được vào, Khách hàng bị chặn)
+function handleAdminEntry(event, targetPage = 'admin.html') {
+  if (event) event.preventDefault();
+
+  if (!currentUser || !authToken) {
+    alert("🔒 KHU VỰC QUẢN TRỊ VIÊN:\n\nĐây là khu vực trang quản trị shop Blushé Beauty chỉ dành riêng cho Admin.\nVui lòng đăng nhập với tài khoản Quản trị viên để truy cập!");
+    openAuthModal();
+    return;
+  }
+
+  if (currentUser.role !== 'admin') {
+    alert("⛔ TRUY CẬP BỊ TỪ CHỐI!\n\nTài khoản hiện tại của bạn là Khách hàng (" + (currentUser.name || currentUser.email) + ").\nĐây là khu vực của trang quản trị shop, chỉ có Admin mới được vào!");
+    return;
+  }
+
+  // Nếu là Admin thì cho phép vào
+  window.location.href = targetPage;
+}
+
 function openAuthModal() {
+  const fLogin = document.getElementById("loginForm");
+  const fReg = document.getElementById("registerForm");
+  if (fLogin) fLogin.reset();
+  if (fReg) fReg.reset();
+  switchAuthTab("login");
   document.getElementById("authModal")?.classList.remove("hidden");
 }
 

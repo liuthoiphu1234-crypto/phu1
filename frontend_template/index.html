@@ -67,7 +67,7 @@
         </button>
 
         <!-- Nút chuyển tới Trang Admin -->
-        <a href="admin.html" class="btn-nav-admin" title="Truy cập Bảng Quản trị Admin">
+        <a href="admin.html" class="btn-nav-admin" title="Truy cập Bảng Quản trị Admin" onclick="handleAdminEntry(event, 'admin.html')">
           ⚙️ Admin
         </a>
       </div>
@@ -410,8 +410,8 @@
             <li><a href="#products">Danh mục mỹ phẩm</a></li>
             <li><a href="#brands">Thương hiệu phân phối</a></li>
             <li><a href="#testimonials">Đánh giá khách hàng</a></li>
-            <li><a href="admin.html">Cổng Quản trị Admin</a></li>
-            <li><a href="customers.html">Quản trị Khách hàng</a></li>
+            <li><a href="admin.html" onclick="handleAdminEntry(event, 'admin.html')">Cổng Quản trị Admin</a></li>
+            <li><a href="customers.html" onclick="handleAdminEntry(event, 'customers.html')">Quản trị Khách hàng</a></li>
           </ul>
         </div>
 
@@ -651,22 +651,18 @@
         </div>
 
         <!-- Form Đăng nhập -->
-        <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+        <form id="loginForm" onsubmit="handleLoginSubmit(event)" autocomplete="off">
           <div class="form-group">
             <label class="form-label">Email đăng nhập</label>
-            <input type="email" name="email" class="form-input" required placeholder="admin@blushe.vn hoặc email của bạn" />
+            <input type="email" name="email" class="form-input" required placeholder="Nhập địa chỉ email của bạn..." autocomplete="off" />
           </div>
           <div class="form-group">
             <label class="form-label">Mật khẩu</label>
-            <input type="password" name="password" class="form-input" required placeholder="••••••••" />
+            <input type="password" name="password" class="form-input" required placeholder="Nhập mật khẩu..." autocomplete="new-password" />
           </div>
           <button type="submit" class="btn-checkout-full" style="margin-top:10px;">
             Đăng Nhập Ngay
           </button>
-          <div style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:14px;line-height:1.6;">
-            🛡️ Admin: <strong>admin@blushe.vn</strong> / <strong>admin123</strong><br/>
-            🛍️ Khách hàng: <strong>khachhang@gmail.com</strong> / <strong>123456</strong>
-          </div>
         </form>
 
         <!-- Form Đăng ký -->

@@ -24,51 +24,46 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadAllAdminData();
 });
 
-// 2. XÁC THỰC QUYỀN ADMIN
+// 2. XÁC THỰC QUYỀN ADMIN (CHỈ CHO PHÉP ADMIN, TỪ CHỐI KHÁCH HÀNG)
 async function ensureAdminAuth() {
-  if (!adminToken || !currentAdmin || currentAdmin.role !== "admin") {
-    // Tự động hỗ trợ đăng nhập Admin với tài khoản đã seed
-    try {
-      let res = await API.login("admin@blushe.vn", "admin123");
-      if (!res.success) {
-        res = await API.login("admin@lhu.edu.vn", "123456");
-      }
-      if (res.success && res.token && res.user.role === "admin") {
-        adminToken = res.token;
-        currentAdmin = res.user;
-        localStorage.setItem("BLUSHE_TOKEN", adminToken);
-        localStorage.setItem("BLUSHE_USER", JSON.stringify(currentAdmin));
-      } else {
-        const loginEmail = prompt("Vui lòng nhập Email Quản Trị Viên:", "admin@blushe.vn");
-        const loginPass = prompt("Vui lòng nhập Mật Khẩu Admin:", "admin123");
-        if (loginEmail && loginPass) {
-          const authRes = await API.login(loginEmail, loginPass);
-          if (authRes.success && authRes.token) {
-            adminToken = authRes.token;
-            currentAdmin = authRes.user;
-            localStorage.setItem("BLUSHE_TOKEN", adminToken);
-            localStorage.setItem("BLUSHE_USER", JSON.stringify(currentAdmin));
-          } else {
-            alert("Đăng nhập thất bại: " + authRes.message);
-            window.location.href = "index.html";
-            return;
-          }
-        } else {
-          window.location.href = "index.html";
-          return;
-        }
-      }
-    } catch (err) {
-      console.error("Lỗi xác thực Admin:", err);
+  // 1. Kiểm tra trạng thái đăng nhập
+  if (!adminToken || !currentAdmin) {
+    alert("🔒 Khu vực quản trị yêu cầu quyền Admin!\nVui lòng đăng nhập với tài khoản Quản trị viên.");
+    window.location.href = "index.html";
+    return;
+  }
+
+  // 2. Chặn tuyệt đối tài khoản khách hàng
+  if (currentAdmin.role !== "admin") {
+    alert("⛔ TRUY CẬP BỊ TỪ CHỐI!\n\nTài khoản hiện tại của bạn là Khách hàng (" + (currentAdmin.name || currentAdmin.email) + ").\nĐây là khu vực của trang quản trị shop, chỉ có Admin mới được vào!");
+    window.location.href = "index.html";
+    return;
+  }
+
+  // 3. Xác thực tính hợp lệ của Token với máy chủ Backend
+  try {
+    const meRes = await API.getMe(adminToken);
+    if (!meRes.success || !meRes.user || meRes.user.role !== "admin") {
+      alert("⛔ Phiên đăng nhập Quản trị viên không hợp lệ hoặc đã hết hạn!\nVui lòng đăng nhập lại với tài khoản Admin.");
+      localStorage.removeItem("BLUSHE_TOKEN");
+      localStorage.removeItem("BLUSHE_USER");
+      window.location.href = "index.html";
+      return;
     }
+    currentAdmin = meRes.user;
+    localStorage.setItem("BLUSHE_USER", JSON.stringify(currentAdmin));
+  } catch (err) {
+    console.warn("Lỗi kiểm tra token admin:", err);
   }
 
   // Cập nhật thông tin trên thanh Topbar
   if (currentAdmin) {
     const nameEl = document.getElementById("adminCurrentName");
     const avatarEl = document.getElementById("adminAvatarLetter");
+    const emailEl = document.getElementById("adminEmailBadge");
     if (nameEl) nameEl.innerText = currentAdmin.name || "Quản Trị Viên";
     if (avatarEl && currentAdmin.name) avatarEl.innerText = currentAdmin.name[0].toUpperCase();
+    if (emailEl) emailEl.innerText = (currentAdmin.email || "") + " (Admin)";
   }
 }
 
