@@ -945,24 +945,30 @@
           return;
         }
 
+        const nameEl = document.getElementById("custAdminName");
+        const roleEl = document.getElementById("custAdminRole");
+        const avatarEl = document.getElementById("custAdminAvatar");
+        if (nameEl) nameEl.innerText = user.name || "Quản Trị Viên";
+        if (roleEl) roleEl.innerText = (user.email || "") + " (Admin)";
+        if (avatarEl && user.name) avatarEl.innerText = user.name[0].toUpperCase();
+
         try {
           const meRes = await API.getMe(adminToken);
-          if (!meRes.success || !meRes.user || meRes.user.role !== "admin") {
-            alert("⛔ Phiên đăng nhập Quản trị viên không hợp lệ hoặc đã hết hạn!\nVui lòng đăng nhập lại với tài khoản Admin.");
-            localStorage.removeItem("BLUSHE_TOKEN");
-            localStorage.removeItem("BLUSHE_USER");
-            window.location.href = "index.html";
-            return;
+          const verifiedAdmin = meRes.user || meRes.data;
+          if (meRes.success && verifiedAdmin) {
+            if (verifiedAdmin.role !== "admin") {
+              alert("⛔ Tài khoản này không có quyền Quản trị viên!");
+              localStorage.removeItem("BLUSHE_TOKEN");
+              localStorage.removeItem("BLUSHE_USER");
+              window.location.href = "index.html";
+              return;
+            }
+            if (nameEl) nameEl.innerText = verifiedAdmin.name || "Quản Trị Viên";
+            if (roleEl) roleEl.innerText = (verifiedAdmin.email || "") + " (Admin)";
+            if (avatarEl && verifiedAdmin.name) avatarEl.innerText = verifiedAdmin.name[0].toUpperCase();
           }
-          const adminObj = meRes.user;
-          const nameEl = document.getElementById("custAdminName");
-          const roleEl = document.getElementById("custAdminRole");
-          const avatarEl = document.getElementById("custAdminAvatar");
-          if (nameEl) nameEl.innerText = adminObj.name || "Quản Trị Viên";
-          if (roleEl) roleEl.innerText = adminObj.email + " (Admin)";
-          if (avatarEl && adminObj.name) avatarEl.innerText = adminObj.name[0].toUpperCase();
         } catch (e) {
-          console.error(e);
+          console.warn("Lỗi kiểm tra token admin:", e);
         }
       }
 

@@ -120,6 +120,7 @@ exports.getMe = async (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Lấy thông tin tài khoản thành công',
+    user: req.user,
     data: req.user
   });
 };

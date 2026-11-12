@@ -26,6 +26,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // 2. XÁC THỰC QUYỀN ADMIN (CHỈ CHO PHÉP ADMIN, TỪ CHỐI KHÁCH HÀNG)
 async function ensureAdminAuth() {
+  // Đọc lại dữ liệu mới nhất từ localStorage
+  adminToken = localStorage.getItem("BLUSHE_TOKEN") || "";
+  currentAdmin = JSON.parse(localStorage.getItem("BLUSHE_USER") || "null");
+
   // 1. Kiểm tra trạng thái đăng nhập
   if (!adminToken || !currentAdmin) {
     alert("🔒 Khu vực quản trị yêu cầu quyền Admin!\nVui lòng đăng nhập với tài khoản Quản trị viên.");
@@ -40,30 +44,34 @@ async function ensureAdminAuth() {
     return;
   }
 
-  // 3. Xác thực tính hợp lệ của Token với máy chủ Backend
+  // 3. Cập nhật thông tin trên thanh Topbar ngay lập tức
+  const nameEl = document.getElementById("adminCurrentName");
+  const avatarEl = document.getElementById("adminAvatarLetter");
+  const emailEl = document.getElementById("adminEmailBadge");
+  if (nameEl) nameEl.innerText = currentAdmin.name || "Quản Trị Viên";
+  if (avatarEl && currentAdmin.name) avatarEl.innerText = currentAdmin.name[0].toUpperCase();
+  if (emailEl) emailEl.innerText = (currentAdmin.email || "") + " (Admin)";
+
+  // 4. Đồng bộ xác thực với máy chủ Backend (nếu token hết hạn thì mới báo)
   try {
     const meRes = await API.getMe(adminToken);
-    if (!meRes.success || !meRes.user || meRes.user.role !== "admin") {
-      alert("⛔ Phiên đăng nhập Quản trị viên không hợp lệ hoặc đã hết hạn!\nVui lòng đăng nhập lại với tài khoản Admin.");
-      localStorage.removeItem("BLUSHE_TOKEN");
-      localStorage.removeItem("BLUSHE_USER");
-      window.location.href = "index.html";
-      return;
+    const verifiedAdmin = meRes.user || meRes.data;
+    if (meRes.success && verifiedAdmin) {
+      if (verifiedAdmin.role !== "admin") {
+        alert("⛔ Tài khoản này không có quyền Quản trị viên!");
+        localStorage.removeItem("BLUSHE_TOKEN");
+        localStorage.removeItem("BLUSHE_USER");
+        window.location.href = "index.html";
+        return;
+      }
+      currentAdmin = verifiedAdmin;
+      localStorage.setItem("BLUSHE_USER", JSON.stringify(currentAdmin));
+      if (nameEl) nameEl.innerText = currentAdmin.name || "Quản Trị Viên";
+      if (avatarEl && currentAdmin.name) avatarEl.innerText = currentAdmin.name[0].toUpperCase();
+      if (emailEl) emailEl.innerText = (currentAdmin.email || "") + " (Admin)";
     }
-    currentAdmin = meRes.user;
-    localStorage.setItem("BLUSHE_USER", JSON.stringify(currentAdmin));
   } catch (err) {
     console.warn("Lỗi kiểm tra token admin:", err);
-  }
-
-  // Cập nhật thông tin trên thanh Topbar
-  if (currentAdmin) {
-    const nameEl = document.getElementById("adminCurrentName");
-    const avatarEl = document.getElementById("adminAvatarLetter");
-    const emailEl = document.getElementById("adminEmailBadge");
-    if (nameEl) nameEl.innerText = currentAdmin.name || "Quản Trị Viên";
-    if (avatarEl && currentAdmin.name) avatarEl.innerText = currentAdmin.name[0].toUpperCase();
-    if (emailEl) emailEl.innerText = (currentAdmin.email || "") + " (Admin)";
   }
 }
 
