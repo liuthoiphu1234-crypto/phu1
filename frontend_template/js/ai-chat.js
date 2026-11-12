@@ -6,6 +6,7 @@
  */
 
 let isChatOpen = false;
+let chatHistory = [];
 
 // Đóng/Mở cửa sổ Chatbot
 function toggleAIChat() {
@@ -65,8 +66,9 @@ async function sendAIMessage(e) {
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
   try {
-    // 3. Gọi Backend API
-    const res = await API.askAI(text);
+    // 3. Gọi Backend API kèm lịch sử hội thoại gần nhất
+    const recentHistory = chatHistory.slice(-4);
+    const res = await API.askAI(text, recentHistory);
 
     // 4. Xóa trạng thái đang gõ
     const activeTyping = document.getElementById(typingId);
@@ -75,6 +77,8 @@ async function sendAIMessage(e) {
     // 5. Hiển thị phản hồi từ AI
     if (res && res.success) {
       appendMessage(res.reply, 'ai', res.products, res.provider);
+      chatHistory.push({ sender: 'user', text });
+      chatHistory.push({ sender: 'ai', text: res.reply });
       if (res.suggestions && Array.isArray(res.suggestions) && res.suggestions.length > 0) {
         updateQuickPills(res.suggestions);
       }

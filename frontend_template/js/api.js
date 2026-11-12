@@ -611,7 +611,7 @@ const API = {
   },
 
   // 12. TRỢ LÝ AI GEMINI & BLUSHÉ BEAUTY SMART ENGINE
-  async askAI(message) {
+  async askAI(message, history = []) {
     try {
       const token = localStorage.getItem('BLUSHE_TOKEN');
       const headers = { 'Content-Type': 'application/json' };
@@ -621,7 +621,7 @@ const API = {
       const res = await fetch(`${API_BASE_URL}/ai/chat`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ message, token })
+        body: JSON.stringify({ message, token, history })
       });
       return await res.json();
     } catch (err) {
