@@ -347,8 +347,7 @@ const seedData = async () => {
         originalPrice: 850000,
         salePrice: 690000,
         stock: 35,
-        image:
-          "https://images.unsplash.com/photo-1567928815104-b6a37e8c3fec?w=600",
+        image: "https://media.hasaki.vn/hsk/mat-na-cap-nuoc-2.jpg",
         description:
           "Mặt nạ sợi vi sinh lên men ngậm trọn hợp chất JAUM Balancing Complex™ giúp da săn chắc, rạng ngời chỉ sau 15 phút.",
         ingredients:

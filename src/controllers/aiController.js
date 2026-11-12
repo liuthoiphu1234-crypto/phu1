@@ -53,7 +53,7 @@ async function getFreshProduct(productId) {
   }
 }
 
-// 1. Phân tích Token người dùng nếu có
+// Phân tích Token người dùng nếu có
 async function getAuthenticatedUser(req) {
   try {
     let token = null;
@@ -74,7 +74,7 @@ async function getAuthenticatedUser(req) {
   }
 }
 
-// 2. Tra cứu đơn hàng của người dùng hiện tại
+// Tra cứu đơn hàng của người dùng hiện tại
 async function getUserOrderContext(user) {
   if (!user) return { isAuthenticated: false, orders: [] };
   try {
@@ -101,94 +101,212 @@ const COMPETITOR_NON_EXISTENT_KEYWORDS = [
   "l'oreal", 'cosrx', 'biore', 'vaseline', 'innisfree', 'laneige', 'senka', 'simple',
   'cerave', 'klairs', 'some by mi', 'paula', 'paulas choice', 'eucerin', 'neutrogena',
   'vichy', 'dr jart', 'fenty', 'nars', 'ysl', 'tom ford', '3ce', 'romand', 'merzy',
-  'bbia', 'maybelline', 'd program', 'himalaya', 'acnes', 'ponds', 'pond', 'olay'
+  'bbia', 'maybelline', 'd program', 'himalaya', 'acnes', 'ponds', 'pond', 'olay',
+  'sauvage', 'dior sauvage', 'bleu de chanel', 'klenzit', 'megaduo', 'derma forte',
+  'strataderm', 'hiruscar', 'laroche posay', 'la roche posay', 'sVR'
 ];
 
-// Danh mục định danh chính xác các dòng sản phẩm của Blushé Beauty
-const PRODUCT_SPECIFIC_IDENTIFIERS = [
-  { keys: ['estee lauder', 'advanced night repair', 'anr'], idPattern: /estee/i },
-  { keys: ['sk-ii', 'sk ii', 'sk2', 'nuoc than', 'pitera', 'facial treatment essence'], idPattern: /sk-ii/i },
-  { keys: ['la mer', 'creme de la mer', 'duong am than ky'], idPattern: /la mer/i },
-  { keys: ['kiehl', 'calendula', 'hoa cuc'], idPattern: /kiehl/i },
-  { keys: ['sulwhasoo', 'first care'], idPattern: /sulwhasoo/i },
-  { keys: ['cushion dior', 'phan nuoc dior', 'forever skin glow'], idPattern: /cushion/i },
-  { keys: ['son dior', 'dior addict', 'lip glow'], idPattern: /lip glow/i },
-  { keys: ['chanel', 'chanel no 5', 'chanel 5'], idPattern: /chanel/i },
-  { keys: ['chong nang blushe', 'kem chong nang blushe', 'invisible sun shield', 'chong nang pho rong'], idPattern: /invisible sun shield/i },
-  { keys: ['sua rua mat blushe', 'sua rua mat huu co', 'gentle botanical'], idPattern: /gentle botanical/i },
-  { keys: ['tay trang blushe', 'nuoc tay trang blushe', 'micellar cleansing'], idPattern: /micellar/i },
-  { keys: ['mat na tram tra', 'sheet mask blushe', 'tea tree sheet mask'], idPattern: /sheet mask/i },
-  { keys: ['son duong blushe', 'son duong huu co', 'dau hat mo', 'organic lip balm'], idPattern: /organic lip balm/i },
-  { keys: ['bo cham soc da', 'combo 4 mon', 'luxury radiance routine', 'combo hoang gia'], idPattern: /luxury radiance/i }
-];
-
-// 3. Khớp sản phẩm CHÍNH XÁC (Tránh match nhầm các từ chung như "son", "kem")
-function findMatchingProducts(query, products) {
-  const normQuery = removeVietnameseTones(query);
-
-  // 1. Kiểm tra theo định danh đặc thù
-  for (const item of PRODUCT_SPECIFIC_IDENTIFIERS) {
-    if (item.keys.some(k => normQuery.includes(k))) {
-      const found = products.filter(p => item.idPattern.test(removeVietnameseTones(p.name)) || item.idPattern.test(removeVietnameseTones(p.brand || '')));
-      if (found.length > 0) return found;
-    }
-  }
-
-  // 2. Kiểm tra tên đầy đủ của từng sản phẩm trong Database
-  const exactMatches = products.filter(p => {
-    const normName = removeVietnameseTones(p.name);
-    return normQuery.includes(normName);
-  });
-  if (exactMatches.length > 0) return exactMatches;
-
-  // 3. Khớp theo thương hiệu chính hãng có trên website
-  const brandMatches = products.filter(p => {
-    const normBrand = removeVietnameseTones(p.brand || '');
-    return normBrand.length > 2 && normQuery.includes(normBrand);
-  });
-  if (brandMatches.length > 0) return brandMatches;
-
-  // 4. Nếu chỉ chứa các từ chung (kem, son, serum) mà không có tên riêng hay thương hiệu:
-  // Không gán cố định cho 1 sản phẩm cụ thể để tránh tư vấn sai
-  return [];
-}
-
-// 4. Kiểm tra người dùng có đang hỏi về sản phẩm/thương hiệu KHÔNG TỒN TẠI trên website
-function detectNonExistentProduct(query, matchedProducts) {
-  const normQuery = removeVietnameseTones(query);
-
-  // 1. Kiểm tra trực tiếp các từ khóa đối thủ hoặc nhãn hàng không có trong DB
+function isCompetitorOrNonExistent(query) {
+  const norm = removeVietnameseTones(query);
   for (const kw of COMPETITOR_NON_EXISTENT_KEYWORDS) {
-    // Đảm bảo khớp nguyên từ
     const regex = new RegExp(`(^|\\s|[^a-z0-9])${kw}($|\\s|[^a-z0-9])`, 'i');
-    if (regex.test(normQuery)) {
-      return true;
-    }
+    if (regex.test(norm)) return true;
   }
-
-  // 2. Nếu người dùng hỏi mua / giá của một món đồ mà không khớp bất kỳ sản phẩm nào của shop
-  if (matchedProducts.length === 0) {
-    const inquiryPatterns = [
-      'shop co ban', 'co ban khong', 'co san pham', 'gia bao nhieu', 'con hang khong',
-      'ban kem', 'ban son', 'ban serum', 'co nuoc hoa'
-    ];
-    if (inquiryPatterns.some(p => normQuery.includes(p))) {
-      return true;
-    }
-  }
-
   return false;
 }
 
-// 5. Smart Fallback Engine: Xử lý tức thì với độ chính xác 100% dựa trên CSDL MongoDB Atlas
+// Danh mục định danh chi tiết từng sản phẩm trong cửa hàng Blushé Beauty
+const PRODUCT_CATALOG_DEFINITIONS = [
+  {
+    id: 'cleanser',
+    keywords: ['sua rua mat', 'rua mat', 'cleanser', 'gentle botanical'],
+    brand: 'Blushé Naturals',
+    matcher: (p) => /gentle botanical|sua rua mat/i.test(removeVietnameseTones(p.name))
+  },
+  {
+    id: 'toner_kiehl',
+    keywords: ['nuoc hoa hong', 'toner', 'kiehl', 'kiehls', 'calendula', 'hoa cuc', 'nuoc can bang'],
+    brand: "Kiehl's",
+    matcher: (p) => /kiehl|calendula|hoa cuc/i.test(removeVietnameseTones(p.name))
+  },
+  {
+    id: 'serum_estee',
+    keywords: ['serum estee', 'estee lauder', 'estee', 'advanced night repair', 'anr', 'serum ban dem', 'serum dem', 'phuc hoi ban dem', 'chong lao hoa estee'],
+    brand: 'Estée Lauder',
+    matcher: (p) => /estee|advanced night repair/i.test(removeVietnameseTones(p.name))
+  },
+  {
+    id: 'creme_lamer',
+    keywords: ['kem la mer', 'la mer', 'creme de la mer', 'duong am than ky', 'kem duong am', 'kem duong la mer', 'kem phuc hoi'],
+    brand: 'La Mer',
+    matcher: (p) => /la mer|creme de la mer/i.test(removeVietnameseTones(p.name))
+  },
+  {
+    id: 'sunscreen_blushe',
+    keywords: ['kem chong nang', 'chong nang', 'invisible sun shield', 'sun shield', 'spf50', 'chong nang pho rong', 'chong nang blushe'],
+    brand: 'Blushé Naturals',
+    matcher: (p) => /invisible sun shield|chong nang/i.test(removeVietnameseTones(p.name))
+  },
+  {
+    id: 'mask_sulwhasoo',
+    keywords: ['mat na sulwhasoo', 'sulwhasoo', 'first care', 'mat na sinh hoc', 'mat na thao duoc'],
+    negativeKeywords: ['tram tra', 'tra xanh', 'blushe'],
+    brand: 'Sulwhasoo',
+    matcher: (p) => /sulwhasoo|first care/i.test(removeVietnameseTones(p.name))
+  },
+  {
+    id: 'micellar_blushe',
+    keywords: ['nuoc tay trang', 'tay trang', 'micellar', 'cleansing water', 'tay trang blushe'],
+    brand: 'Blushé Naturals',
+    matcher: (p) => /micellar|tay trang/i.test(removeVietnameseTones(p.name))
+  },
+  {
+    id: 'lip_dior',
+    keywords: ['son dior', 'dior addict', 'lip glow', 'son duong dior', 'dior lip glow', 'son cong chua'],
+    negativeKeywords: ['blushe', 'dau hat mo', 'huu co'],
+    brand: 'Dior Beauty',
+    matcher: (p) => /dior addict|lip glow/i.test(removeVietnameseTones(p.name))
+  },
+  {
+    id: 'cushion_dior',
+    keywords: ['cushion dior', 'phan nuoc dior', 'dior cushion', 'forever skin glow', 'phan nuoc', 'cushion', 'phan phu dior'],
+    brand: 'Dior Beauty',
+    matcher: (p) => /forever skin glow|cushion/i.test(removeVietnameseTones(p.name))
+  },
+  {
+    id: 'perfume_chanel',
+    keywords: ['nuoc hoa chanel', 'chanel no 5', 'chanel 5', 'chanel', 'nuoc hoa nu', 'nuoc hoa'],
+    negativeKeywords: ['nuoc hoa hong'],
+    brand: 'Chanel',
+    matcher: (p) => /chanel/i.test(removeVietnameseTones(p.name))
+  },
+  {
+    id: 'combo_blushe',
+    keywords: ['bo cham soc da', 'combo 4 mon', 'luxury radiance', 'combo hoang gia', 'bo san pham', 'set duong da', 'quy trinh 4 buoc'],
+    brand: 'Blushé Naturals',
+    matcher: (p) => /luxury radiance|bo cham soc/i.test(removeVietnameseTones(p.name))
+  },
+  {
+    id: 'essence_skii',
+    keywords: ['nuoc than', 'sk-ii', 'sk ii', 'sk2', 'pitera', 'facial treatment essence', 'tinh chat sk-ii', 'nuoc than sk-ii'],
+    negativeKeywords: ['estee'],
+    brand: 'SK-II',
+    matcher: (p) => /sk-ii|pitera/i.test(removeVietnameseTones(p.name))
+  },
+  {
+    id: 'mask_teatree',
+    keywords: ['mat na tram tra', 'mat na blushe', 'sheet mask blushe', 'tea tree sheet mask', 'mat na tra xanh', 'mat na tri mun'],
+    negativeKeywords: ['sulwhasoo', 'first care'],
+    brand: 'Blushé Naturals',
+    matcher: (p) => /tea tree|mat na tram tra/i.test(removeVietnameseTones(p.name))
+  },
+  {
+    id: 'lip_blushe',
+    keywords: ['son duong blushe', 'son duong huu co', 'dau hat mo', 'organic lip balm', 'son blushe'],
+    negativeKeywords: ['dior', 'addict', 'lip glow'],
+    brand: 'Blushé Naturals',
+    matcher: (p) => /organic lip balm|dau hat mo/i.test(removeVietnameseTones(p.name))
+  }
+];
+
+// Khớp sản phẩm thông minh dựa trên cả định danh, thương hiệu và ngữ cảnh
+function findProductsByQuery(query, products) {
+  const normQuery = removeVietnameseTones(query);
+  const matched = [];
+
+  // 1. Khớp từ khóa cụ thể từ bảng định danh
+  for (const item of PRODUCT_CATALOG_DEFINITIONS) {
+    if (item.negativeKeywords && item.negativeKeywords.some(nk => normQuery.includes(nk))) {
+      continue;
+    }
+    if (item.keywords.some(k => normQuery.includes(k))) {
+      const found = products.filter(item.matcher);
+      found.forEach(p => {
+        if (!matched.some(m => String(m._id) === String(p._id))) {
+          matched.push(p);
+        }
+      });
+    }
+  }
+
+  if (matched.length > 0) return matched;
+
+  // 2. Nếu người dùng hỏi theo nhóm từ khóa chung:
+  // - "son", "son duong", "son moi" -> lấy 2 dòng son
+  if (normQuery.includes('son')) {
+    const lips = products.filter(p => /lip|son/i.test(removeVietnameseTones(p.name)));
+    if (lips.length > 0) return lips;
+  }
+
+  // - "mat na", "mask" -> lấy 2 dòng mặt nạ
+  if (normQuery.includes('mat na') || normQuery.includes('mask')) {
+    const masks = products.filter(p => /mat na|mask/i.test(removeVietnameseTones(p.name)));
+    if (masks.length > 0) return masks;
+  }
+
+  // - "serum", "tinh chat" -> lấy serum Estée Lauder & Nước thần SK-II
+  if (normQuery.includes('serum') || normQuery.includes('tinh chat')) {
+    const serums = products.filter(p => /serum|essence|night repair|pitera/i.test(removeVietnameseTones(p.name)));
+    if (serums.length > 0) return serums;
+  }
+
+  // - "kem duong", "duong am" -> Kem La Mer
+  if (normQuery.includes('kem duong') || normQuery.includes('duong am')) {
+    const creams = products.filter(p => /la mer|kem duong/i.test(removeVietnameseTones(p.name)));
+    if (creams.length > 0) return creams;
+  }
+
+  // 3. Khớp theo thương hiệu
+  const brandKeywords = [
+    { brand: 'Estée Lauder', keys: ['estee lauder', 'estee'] },
+    { brand: 'SK-II', keys: ['sk-ii', 'sk ii', 'sk2'] },
+    { brand: 'La Mer', keys: ['la mer'] },
+    { brand: "Kiehl's", keys: ['kiehl', 'kiehls'] },
+    { brand: 'Sulwhasoo', keys: ['sulwhasoo'] },
+    { brand: 'Dior Beauty', keys: ['dior'] },
+    { brand: 'Chanel', keys: ['chanel'] },
+    { brand: 'Blushé Naturals', keys: ['blushe'] }
+  ];
+
+  for (const b of brandKeywords) {
+    if (b.keys.some(k => normQuery.includes(k))) {
+      const brandProducts = products.filter(p => p.brand === b.brand);
+      if (brandProducts.length > 0) return brandProducts;
+    }
+  }
+
+  return [];
+}
+
+// Xử lý câu hỏi tiếp nối (Pronoun resolution từ lịch sử chat)
+function resolvePronounsFromHistory(query, history = [], products = []) {
+  const norm = removeVietnameseTones(query);
+  const pronounPatterns = ['no ', 'no?', 'san pham nay', 'san pham do', 'chai nay', 'chai do', 'hu nay', 'hu do', 'cay nay', 'cay do', 'mon nay', 'mon do'];
+  const hasPronoun = pronounPatterns.some(p => norm.includes(p)) || norm === 'no' || norm === 'gia bao nhieu' || norm === 'con hang khong';
+
+  if (!hasPronoun || !history || history.length === 0) return query;
+
+  // Lấy các câu trước gần nhất để tìm xem đang nói về sản phẩm nào
+  for (let i = history.length - 1; i >= 0; i--) {
+    const prevText = history[i].parts?.[0]?.text || history[i].message || '';
+    const matched = findProductsByQuery(prevText, products);
+    if (matched.length > 0) {
+      return `${query} ${matched[0].name}`;
+    }
+  }
+  return query;
+}
+
+// Smart Fallback Engine: Xử lý tức thì với độ chính xác 100% dựa trên CSDL MongoDB Atlas
 async function generateVerifiedResponse({ message, products, coupons, userOrderContext, history = [] }) {
-  const normMsg = removeVietnameseTones(message);
-  const lowerMsg = message.toLowerCase();
+  const resolvedQuery = resolvePronounsFromHistory(message, history, products);
+  const normMsg = removeVietnameseTones(resolvedQuery);
+  const lowerMsg = resolvedQuery.toLowerCase();
   let reply = '';
   let matchedProducts = [];
   let suggestions = [];
 
-  // A. BẢO MẬT: CHỐNG PROMPT INJECTION / HACKING (Yêu cầu 4)
+  // A. BẢO MẬT: CHỐNG PROMPT INJECTION / HACKING
   if (
     normMsg.includes('bo qua cac chi dan') ||
     normMsg.includes('ignore previous') ||
@@ -264,7 +382,7 @@ async function generateVerifiedResponse({ message, products, coupons, userOrderC
     return { reply, products: matchedProducts, suggestions, provider: 'Blushé Smart AI Engine' };
   }
 
-  // E. CÂU HỎI NGOÀI PHẠM VI (iPhone, xe máy, laptop, thời tiết...) (Yêu cầu 1, 6)
+  // E. CÂU HỎI NGOÀI PHẠM VI (iPhone, xe máy, laptop, thời tiết...)
   const outOfScopeKeywords = [
     'iphone', 'dien thoai', 'may tinh', 'laptop', 'xe may', 'chung khoan',
     'thoi tiet', 'bong da', 'thoi su', 'bitcoin', 'quan ao', 'giay dep', 'xe dap'
@@ -335,10 +453,45 @@ async function generateVerifiedResponse({ message, products, coupons, userOrderC
     return { reply, products: matchedProducts, suggestions, provider: 'Blushé Smart AI Engine' };
   }
 
-  // G. SO SÁNH HAI SẢN PHẨM (Yêu cầu 3.4 & 6: Đặt trước khi tìm đơn sản phẩm để không nuốt mất so sánh)
+  // G. KIỂM TRA SẢN PHẨM/THƯƠNG HIỆU ĐỐI THỦ HOẶC KHÔNG CÓ TRÊN WEBSITE
+  if (isCompetitorOrNonExistent(resolvedQuery)) {
+    reply = `Xin lỗi, hiện tại tôi chưa tìm thấy thông tin chính xác về sản phẩm này tại Blushé Beauty.\n\n` +
+      `Danh mục sản phẩm của Blushé Beauty chuyên về mỹ phẩm hữu cơ và chăm sóc da cao cấp từ các thương hiệu chính hãng: **Blushé Naturals, Estée Lauder, Kiehl's, La Mer, SK-II, Sulwhasoo, Dior Beauty, Chanel**.\n\n` +
+      `Bạn có thể chia sẻ nhu cầu chăm sóc da (cấp ẩm, kiềm dầu, chống nắng, chống lão hóa...) để em tư vấn các dòng sản phẩm sẵn có tại shop nhé! 🌿`;
+    suggestions = ['Serum cho da dầu', 'Kem chống nắng nhạy cảm', 'Mã giảm giá hôm nay'];
+    return { reply, products: [], suggestions, provider: 'Blushé Smart AI Engine' };
+  }
+
+  // J. KHỚP SẢN PHẨM TRONG DATABASE THEO TỪ KHÓA
+  const foundProducts = findProductsByQuery(resolvedQuery, products);
+
+  // H. TỔNG QUAN DANH MỤC / "SHOP CÓ NHỮNG SẢN PHẨM GÌ?" / "SHOP BÁN GÌ?"
+  if (
+    foundProducts.length === 0 &&
+    (normMsg.includes('nhung san pham gi') ||
+     normMsg.includes('co san pham gi') ||
+     normMsg.includes('shop ban gi') ||
+     normMsg.includes('danh muc san pham') ||
+     normMsg.includes('cac mat hang') ||
+     (normMsg.includes('co nhung gi') && !normMsg.includes('thanh phan') && !normMsg.includes('chong nang')))
+  ) {
+    reply = `Chào mừng bạn đến với **Blushé Beauty** - Thiên đường mỹ phẩm hữu cơ và chăm sóc da cao cấp chuẩn Quốc tế! 🌿✨\n\n` +
+      `Hiện tại shop đang phân phối chính hãng các nhóm sản phẩm nổi bật:\n` +
+      `1. **Làm sạch & Cân bằng**: Sữa rửa mặt hữu cơ Blushé, Nước tẩy trang Micellar, Nước hoa hồng Cúc Kiehl's\n` +
+      `2. **Tinh chất phục hồi**: Serum Estée Lauder Advanced Night Repair, Nước thần SK-II Pitera\n` +
+      `3. **Dưỡng ẩm & Chống nắng**: Kem dưỡng phục hồi La Mer, Kem chống nắng Blushé Invisible Sun Shield SPF50+\n` +
+      `4. **Mặt nạ chuyên sâu**: Mặt nạ tràm trà dịu mụn Blushé, Mặt nạ sinh học Sulwhasoo First Care\n` +
+      `5. **Son dưỡng & Trang điểm**: Son dưỡng Dior Addict Lip Glow, Son dưỡng hữu cơ Blushé, Phấn nước Dior Forever Skin Glow Cushion\n` +
+      `6. **Nước hoa & Combo Hoàng Gia**: Nước hoa Chanel N°5 Eau De Parfum, Combo chăm sóc da 4 món Blushé\n\n` +
+      `Bạn đang quan tâm đến dòng sản phẩm nào hoặc cần tư vấn theo tình trạng da của mình cứ nhắn cho em nhé! 🌸`;
+    matchedProducts = products.filter(p => p.isFeatured || p.isBestSeller).slice(0, 4);
+    suggestions = ['Sữa rửa mặt hữu cơ', 'Serum chống lão hóa', 'Kem chống nắng', 'Mã giảm giá'];
+    return { reply, products: matchedProducts, suggestions, provider: 'Blushé Smart AI Engine' };
+  }
+
+  // I. SO SÁNH HAI SẢN PHẨM
   if (normMsg.includes('so sanh') || normMsg.includes('khac nhau')) {
     let compareList = [];
-    // Tìm các sản phẩm được nhắc đến
     for (const p of products) {
       const normName = removeVietnameseTones(p.name);
       const normBrand = removeVietnameseTones(p.brand || '');
@@ -377,31 +530,20 @@ async function generateVerifiedResponse({ message, products, coupons, userOrderC
     return { reply, products: [p1, p2], suggestions: ['Xem chi tiết sản phẩm 1', 'Xem chi tiết sản phẩm 2', 'Mã giảm giá'], provider: 'Blushé Smart AI Engine' };
   }
 
-  // H. HỎI SẢN PHẨM KHÔNG CÓ TRONG CƠ SỞ DỮ LIỆU (Yêu cầu 2: Bắt buộc thông báo không tìm thấy)
-  const candidateProducts = findMatchingProducts(message, products);
-  const isNonExistent = detectNonExistentProduct(message, candidateProducts);
-
-  if (isNonExistent) {
-    reply = `Xin lỗi, hiện tại tôi chưa tìm thấy thông tin chính xác về sản phẩm này tại Blushé Beauty.\n\n` +
-      `Danh mục sản phẩm của Blushé Beauty chuyên về mỹ phẩm hữu cơ và chăm sóc da cao cấp từ các thương hiệu chính hãng: **Blushé Naturals, Estée Lauder, Kiehl's, La Mer, SK-II, Sulwhasoo, Dior Beauty, Chanel**.\n\n` +
-      `Bạn có thể chia sẻ nhu cầu chăm sóc da (cấp ẩm, kiềm dầu, chống nắng, chống lão hóa...) để em tư vấn các dòng sản phẩm sẵn có tại shop nhé! 🌿`;
-    suggestions = ['Serum cho da dầu', 'Kem chống nắng nhạy cảm', 'Mã giảm giá hôm nay'];
-    return { reply, products: [], suggestions, provider: 'Blushé Smart AI Engine' };
-  }
-
-  // I. HỎI VỀ SẢN PHẨM CỤ THỂ ĐÃ TÌM THẤY TRONG DATABASE (Giá, Tồn kho, Hết hàng, Thành phần)
-  if (candidateProducts.length > 0) {
-    const targetProduct = candidateProducts[0];
-    // Lấy dữ liệu tươi mới từ DB để đảm bảo giá và tồn kho chính xác 100% (Yêu cầu 9.12)
+  // J. KHỚP SẢN PHẨM TRONG DATABASE THEO TỪ KHÓA
+  // TRƯỜNG HỢP 1: TÌM THẤY 1 SẢN PHẨM CỤ THỂ
+  if (foundProducts.length === 1) {
+    const targetProduct = foundProducts[0];
     const freshP = await getFreshProduct(targetProduct._id) || targetProduct;
 
-    // 1. Kiểm tra nếu hỏi về TỒN KHO hoặc TÌNH TRẠNG CÒN HÀNG (Yêu cầu 2)
+    // 1. Hỏi về TỒN KHO hoặc CÒN HÀNG
     if (
       normMsg.includes('ton kho') ||
       normMsg.includes('con bao nhieu') ||
       normMsg.includes('con hang khong') ||
       normMsg.includes('so luong con') ||
-      normMsg.includes('het hang chua')
+      normMsg.includes('het hang chua') ||
+      normMsg.includes('con khong')
     ) {
       if (freshP.stock === 0) {
         reply = `Dạ sản phẩm **${freshP.name}** (${freshP.brand}) hiện đang **HẾT HÀNG** trong kho của Blushé Beauty ❌.\n\n` +
@@ -417,7 +559,7 @@ async function generateVerifiedResponse({ message, products, coupons, userOrderC
       }
     }
 
-    // 2. Kiểm tra nếu hỏi về GIÁ BÁN
+    // 2. Hỏi về GIÁ BÁN
     if (
       normMsg.includes('gia bao nhieu') ||
       normMsg.includes('bao nhieu tien') ||
@@ -433,7 +575,7 @@ async function generateVerifiedResponse({ message, products, coupons, userOrderC
       return { reply, products: [freshP], suggestions: ['Tồn kho thực tế', 'Thành phần', 'Xem chi tiết'], provider: 'Blushé Smart AI Engine' };
     }
 
-    // 3. Nếu sản phẩm HẾT HÀNG nhưng người dùng hỏi thông tin chung (Yêu cầu 2: Bắt buộc thông báo hết hàng)
+    // 3. Nếu sản phẩm HẾT HÀNG
     if (freshP.stock === 0) {
       reply = `Dạ sản phẩm **${freshP.name}** (${freshP.brand}) hiện đang **HẾT HÀNG** trong kho của Blushé Beauty ❌.\n\n` +
         `• Giá niêm yết: **${formatVND(freshP.salePrice)}** | Dung tích: ${freshP.volume}\n` +
@@ -443,7 +585,7 @@ async function generateVerifiedResponse({ message, products, coupons, userOrderC
       return { reply, products: [freshP], suggestions: ['Sản phẩm tương tự', 'Mã giảm giá'], provider: 'Blushé Smart AI Engine' };
     }
 
-    // 4. Tư vấn thông tin chi tiết sản phẩm có trong DB
+    // 4. Tư vấn thông tin chi tiết / Thành phần / Công dụng
     reply = `Dạ sản phẩm **${freshP.name}** thuộc thương hiệu **${freshP.brand}** đang có giá ưu đãi là **${formatVND(freshP.salePrice)}** (Giá gốc: ${formatVND(freshP.originalPrice)}), còn **${freshP.stock} sản phẩm** trong kho.\n\n` +
       `• **Loại da phù hợp**: ${freshP.skinType}\n` +
       `• **Dung tích/Khối lượng**: ${freshP.volume} - Xuất xứ: ${freshP.origin}\n` +
@@ -454,50 +596,23 @@ async function generateVerifiedResponse({ message, products, coupons, userOrderC
     return { reply, products: [freshP], suggestions: ['Tồn kho còn bao nhiêu?', 'Mã giảm giá áp dụng', 'Xem chi tiết'], provider: 'Blushé Smart AI Engine' };
   }
 
-  // J. THÀNH PHẦN CHUNG KHI KHÔNG CÓ SẢN PHẨM CỤ THỂ
-  if (
-    normMsg.includes('thanh phan') ||
-    normMsg.includes('con kho') ||
-    normMsg.includes('paraben') ||
-    normMsg.includes('huong lieu') ||
-    normMsg.includes('chat bao quan') ||
-    normMsg.includes('lanh tinh')
-  ) {
-    reply = `Dạ triết lý cốt lõi của Blushé Beauty là **Luxury Organic Beauty - Mỹ phẩm hữu cơ chuẩn Châu Âu** an toàn và lành tính tuyệt đối:\n\n` +
-      `🌱 **Cam kết 5 KHÔNG**:\n` +
-      `1. ❌ **Không cồn khô (Alcohol-free)**: Không làm bào mòn hay khô căng biểu bì da.\n` +
-      `2. ❌ **Không Paraben**: 100% không chứa chất bảo quản hóa học độc hại.\n` +
-      `3. ❌ **Không hương liệu nhân tạo (Fragrance-free)**: Chỉ lưu giữ hương thơm thảo mộc tự nhiên dịu mát.\n` +
-      `4. ❌ **Không dầu khoáng (Mineral oil-free)**: Không gây bít tắc lỗ chân lông hay sinh mụn ẩn.\n` +
-      `5. ❌ **Không thử nghiệm trên động vật (Cruelty-free)**.\n\n` +
-      `Tất cả sản phẩm đều được chiết xuất từ thảo dược hữu cơ đạt kiểm nghiệm da liễu nghiêm ngặt. Bạn đang quan tâm đến thành phần của sản phẩm nào để em hỗ trợ phân tích chi tiết nhé! 🌿🕊️`;
-    matchedProducts = products.filter(p => p.isFeatured || p.isBestSeller).slice(0, 3);
-    suggestions = ['Sữa rửa mặt hữu cơ', 'Serum phục hồi B5', 'Kem chống nắng nhạy cảm'];
-    return { reply, products: matchedProducts, suggestions, provider: 'Blushé Smart AI Engine' };
+  // TRƯỜNG HỢP 2: TÌM THẤY NHIỀU HƠN 1 SẢN PHẨM (Ví dụ: "Son dưỡng", "Mặt nạ", "Serum", "Kiehl's", "Blushé")
+  if (foundProducts.length > 1) {
+    // Lấy thông tin tồn kho và giá mới nhất cho từng sản phẩm
+    const freshList = await Promise.all(foundProducts.map(async p => (await getFreshProduct(p._id)) || p));
+
+    reply = `Dạ tại Blushé Beauty hiện có **${freshList.length} sản phẩm** chính hãng phù hợp với yêu cầu của bạn:\n\n`;
+    freshList.forEach((p, idx) => {
+      const stockText = p.stock > 0 ? `Còn ${p.stock} sản phẩm` : `HẾT HÀNG ❌`;
+      reply += `${idx + 1}️⃣ **${p.name}** (${p.brand}):\n` +
+        `• Giá ưu đãi: **${formatVND(p.salePrice)}** (Giá gốc: ${formatVND(p.originalPrice)}) | Tồn kho: **${stockText}**\n` +
+        `• Phù hợp với: ${p.skinType}\n\n`;
+    });
+    reply += `Bạn có thể bấm vào thẻ sản phẩm bên dưới để xem chi tiết từng món hoặc thêm vào giỏ hàng nhé! 🌿🌸`;
+    return { reply, products: freshList, suggestions: ['Xem chi tiết sản phẩm 1', 'Mã giảm giá hôm nay', 'Chính sách vận chuyển'], provider: 'Blushé Smart AI Engine' };
   }
 
-  // K. TÌM KIẾM THEO NGÂN SÁCH (Yêu cầu 3.3 & 6)
-  if (normMsg.includes('duoi 200') || normMsg.includes('duoi 300') || normMsg.includes('duoi 500') || normMsg.includes('duoi 1 trieu') || normMsg.includes('ngan sach')) {
-    let maxPrice = 500000;
-    if (normMsg.includes('200')) maxPrice = 200000;
-    else if (normMsg.includes('300')) maxPrice = 300000;
-    else if (normMsg.includes('400')) maxPrice = 400000;
-    else if (normMsg.includes('500')) maxPrice = 500000;
-    else if (normMsg.includes('1 trieu') || normMsg.includes('1tr')) maxPrice = 1000000;
-
-    matchedProducts = products.filter(p => p.salePrice <= maxPrice && p.stock > 0);
-    if (matchedProducts.length > 0) {
-      reply = `Dạ với mức ngân sách dưới **${formatVND(maxPrice)}**, em đã chọn lọc các sản phẩm chất lượng cao, đang còn sẵn hàng tại Blushé Beauty dành cho bạn:\n\n` +
-        matchedProducts.map(p => `• **${p.name}** - Giá: **${formatVND(p.salePrice)}** (${p.skinType || 'Mọi loại da'}, còn ${p.stock} sản phẩm)`).join('\n') +
-        `\n\nTất cả sản phẩm đều có thành phần hữu cơ an toàn. Bạn xem chi tiết sản phẩm bên dưới nhé! 🌿`;
-    } else {
-      reply = `Dạ với ngân sách dưới ${formatVND(maxPrice)}, hiện các sản phẩm trong tầm giá này đang tạm hết hàng. Em xin giới thiệu các sản phẩm có mức giá gần nhất với chất lượng tối ưu nhất ạ! 🌸`;
-      matchedProducts = products.filter(p => p.stock > 0).sort((a, b) => a.salePrice - b.salePrice).slice(0, 3);
-    }
-    return { reply, products: matchedProducts.slice(0, 4), suggestions: ['Dưới 300k', 'Dưới 500k', 'Freeship từ bao nhiêu?'], provider: 'Blushé Smart AI Engine' };
-  }
-
-  // L. TƯ VẤN THEO LOẠI DA (DẦU, KHÔ, NHẠY CẢM, HỖN HỢP)
+  // K. TƯ VẤN THEO LOẠI DA (DẦU, KHÔ, NHẠY CẢM, LÃO HÓA)
   if (normMsg.includes('da dau') || normMsg.includes('da nhon') || normMsg.includes('kiem dau') || normMsg.includes('mun')) {
     matchedProducts = products.filter(p => {
       const st = (p.skinType || '').toLowerCase();
@@ -530,21 +645,35 @@ async function generateVerifiedResponse({ message, products, coupons, userOrderC
     return { reply, products: matchedProducts.slice(0, 3), suggestions: ['Kem chống nắng nhạy cảm', 'Sữa rửa mặt dịu nhẹ', 'Serum phục hồi B5'], provider: 'Blushé Smart AI Engine' };
   }
 
-  // M. TÌM THEO DANH MỤC
-  const catKeywords = ['serum', 'sua rua mat', 'toner', 'nuoc hoa hong', 'kem duong', 'mat na', 'tay trang', 'son', 'nuoc hoa'];
-  for (const kw of catKeywords) {
-    if (normMsg.includes(kw)) {
-      matchedProducts = products.filter(p => {
-        const cat = removeVietnameseTones(p.category ? p.category.name : '');
-        const name = removeVietnameseTones(p.name);
-        return name.includes(kw) || cat.includes(kw);
-      });
-      if (matchedProducts.length > 0) {
-        reply = `Dạ Blushé Beauty có các dòng sản phẩm **${kw.toUpperCase()}** chiết xuất thiên nhiên rất được yêu thích dưới đây ạ:\n\n` +
-          `Mỗi sản phẩm đều có thành phần hữu cơ chọn lọc, đảm bảo an toàn cho da. Bạn có thể bấm vào thẻ sản phẩm để xem chi tiết nhé! 🌿`;
-        return { reply, products: matchedProducts.slice(0, 3), suggestions: ['Giá dưới 300k', 'Cho da dầu', 'Cho da nhạy cảm'], provider: 'Blushé Smart AI Engine' };
-      }
+  // L. TÌM KIẾM THEO NGÂN SÁCH
+  if (normMsg.includes('duoi 200') || normMsg.includes('duoi 300') || normMsg.includes('duoi 500') || normMsg.includes('duoi 1 trieu') || normMsg.includes('ngan sach')) {
+    let maxPrice = 500000;
+    if (normMsg.includes('200')) maxPrice = 200000;
+    else if (normMsg.includes('300')) maxPrice = 300000;
+    else if (normMsg.includes('400')) maxPrice = 400000;
+    else if (normMsg.includes('500')) maxPrice = 500000;
+    else if (normMsg.includes('1 trieu') || normMsg.includes('1tr')) maxPrice = 1000000;
+
+    matchedProducts = products.filter(p => p.salePrice <= maxPrice && p.stock > 0);
+    if (matchedProducts.length > 0) {
+      reply = `Dạ với mức ngân sách dưới **${formatVND(maxPrice)}**, em đã chọn lọc các sản phẩm chất lượng cao, đang còn sẵn hàng tại Blushé Beauty dành cho bạn:\n\n` +
+        matchedProducts.map(p => `• **${p.name}** - Giá: **${formatVND(p.salePrice)}** (${p.skinType || 'Mọi loại da'}, còn ${p.stock} sản phẩm)`).join('\n') +
+        `\n\nTất cả sản phẩm đều có thành phần hữu cơ an toàn. Bạn xem chi tiết sản phẩm bên dưới nhé! 🌿`;
+    } else {
+      reply = `Dạ với ngân sách dưới ${formatVND(maxPrice)}, hiện các sản phẩm trong tầm giá này đang tạm hết hàng. Em xin giới thiệu các sản phẩm có mức giá gần nhất với chất lượng tối ưu nhất ạ! 🌸`;
+      matchedProducts = products.filter(p => p.stock > 0).sort((a, b) => a.salePrice - b.salePrice).slice(0, 3);
     }
+    return { reply, products: matchedProducts.slice(0, 4), suggestions: ['Dưới 300k', 'Dưới 500k', 'Freeship từ bao nhiêu?'], provider: 'Blushé Smart AI Engine' };
+  }
+
+  // M. NẾU NGƯỜI DÙNG HỎI MUA MỘT SẢN PHẨM KHÔNG CÓ TRÊN HỆ THỐNG
+  const purchaseInquiry = ['co ban', 'ban khong', 'tim mua', 'con ban'];
+  if (purchaseInquiry.some(p => normMsg.includes(p))) {
+    reply = `Xin lỗi, hiện tại tôi chưa tìm thấy thông tin chính xác về sản phẩm này tại Blushé Beauty.\n\n` +
+      `Danh mục sản phẩm của Blushé Beauty chuyên về mỹ phẩm hữu cơ và chăm sóc da cao cấp từ các thương hiệu chính hãng: **Blushé Naturals, Estée Lauder, Kiehl's, La Mer, SK-II, Sulwhasoo, Dior Beauty, Chanel**.\n\n` +
+      `Bạn có thể chia sẻ nhu cầu chăm sóc da (cấp ẩm, kiềm dầu, chống nắng, chống lão hóa...) để em tư vấn các dòng sản phẩm sẵn có tại shop nhé! 🌿`;
+    suggestions = ['Serum cho da dầu', 'Kem chống nắng nhạy cảm', 'Mã giảm giá hôm nay'];
+    return { reply, products: [], suggestions, provider: 'Blushé Smart AI Engine' };
   }
 
   // N. MẶC ĐỊNH THÂN THIỆN
@@ -582,15 +711,16 @@ exports.chatWithAI = async (req, res) => {
     const userOrderContext = await getUserOrderContext(currentUser);
 
     // 2. Cơ chế tiền kiểm tra (Pre-filter Fast Path):
-    // Với các câu hỏi tra cứu dữ liệu thực tế (Hỏi sản phẩm cụ thể, Giá, Tồn kho, Hết hàng, So sánh, Voucher, Phí ship, Hàng không tồn tại, Ngoài phạm vi...)
-    // Phản hồi NGAY LẬP TỨC trong < 0.2s để đạt mục tiêu tốc độ 1-2s (Yêu cầu 9.1 - 9.10)
     const normMsg = removeVietnameseTones(trimmedMsg);
-    const candidateProducts = findMatchingProducts(trimmedMsg, products);
-    const isAskingNonExistent = detectNonExistentProduct(trimmedMsg, candidateProducts);
+    const candidateProducts = findProductsByQuery(trimmedMsg, products);
+    const isCompetitor = isCompetitorOrNonExistent(trimmedMsg);
 
     const isDirectFactQuery =
-      isAskingNonExistent ||
+      isCompetitor ||
       candidateProducts.length > 0 ||
+      normMsg.includes('nhung san pham gi') ||
+      normMsg.includes('shop ban gi') ||
+      normMsg.includes('danh muc') ||
       normMsg.includes('so sanh') ||
       normMsg.includes('khac nhau') ||
       normMsg.includes('ton kho') ||
@@ -645,9 +775,7 @@ exports.chatWithAI = async (req, res) => {
       });
     }
 
-    // 3. Với các câu hỏi tư vấn phức tạp (Tư vấn chu trình da dầu/khô/mụn/nhạy cảm, phối hợp sản phẩm):
-    // Gọi Google Gemini 3.8 Flash nhưng CHỈ truyền vào 2-3 sản phẩm liên quan nhất (RAG chọn lọc)
-    // để giảm 80% dung lượng prompt, giúp Gemini phản hồi nhanh trong 2-3 giây!
+    // 3. Với các câu hỏi tư vấn phức tạp:
     const apiKey = process.env.GEMINI_API_KEY;
     if (apiKey && apiKey !== 'AIzaSyDemoKeyYourGeminiApiKeyHere12345') {
       try {
@@ -660,7 +788,6 @@ exports.chatWithAI = async (req, res) => {
           }
         });
 
-        // Chỉ đưa tối đa 3 sản phẩm liên quan nhất vào ngữ cảnh Gemini
         const relevantProducts = candidateProducts.length > 0
           ? candidateProducts.slice(0, 3)
           : products.filter(p => p.isFeatured || p.isBestSeller).slice(0, 3);
@@ -688,7 +815,6 @@ ${relevantCatalogText}
           ]
         });
 
-        // Đặt timeout 3.5 giây để đảm bảo trải nghiệm người dùng luôn nhanh chóng
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Gemini API timeout')), 3500)
         );
@@ -696,7 +822,6 @@ ${relevantCatalogText}
         const result = await Promise.race([geminiPromise, timeoutPromise]);
         let textReply = result.response.text();
 
-        // Trích xuất ID sản phẩm được đề xuất
         let recommendedIds = [];
         const matchRec = textReply.match(/\[RECOMMENDED_PRODUCTS:\s*([^\]]+)\]/i);
         if (matchRec) {
@@ -733,7 +858,7 @@ ${relevantCatalogText}
       }
     }
 
-    // 4. Fallback tức thì sang Blushé Smart AI Engine (Chính xác 100%, bảo mật, thời gian < 0.1s)
+    // 4. Fallback tức thì sang Blushé Smart AI Engine
     const verifiedResult = await generateVerifiedResponse({
       message: trimmedMsg,
       products,
