@@ -209,6 +209,64 @@ const PRODUCT_CATALOG_DEFINITIONS = [
   }
 ];
 
+// Phân tích câu hỏi lọc theo khoảng giá / ngân sách: "trên 5 tr", "dưới 500k", "từ 1 đến 3 triệu"
+function parsePriceQuery(text) {
+  if (!text) return null;
+  const norm = removeVietnameseTones(text).replace(/,/g, '.');
+
+  function parseAmount(valStr, unitStr) {
+    let num = parseFloat(valStr);
+    if (isNaN(num)) return null;
+    const u = (unitStr || '').toLowerCase();
+    if (u.includes('tr') || u.includes('trieu') || u.includes('m')) {
+      return num * 1000000;
+    }
+    if (u.includes('k') || u.includes('nghin') || u.includes('ngan')) {
+      return num * 1000;
+    }
+    if (num < 100) return num * 1000000;
+    return num;
+  }
+
+  // 1. Khoảng từ min đến max: 'tu 1 tr den 3 tr', 'tu 500k den 1 trieu', '1 - 3 trieu'
+  const rangeMatch = norm.match(/(?:tu\s*)?(\d+(?:\.\d+)?)\s*(k|nghin|ngan|tr|trieu)?\s*(?:den|-|toi)\s*(\d+(?:\.\d+)?)\s*(k|nghin|ngan|tr|trieu)?/);
+  if (rangeMatch) {
+    const unit2 = rangeMatch[4] || rangeMatch[2] || 'trieu';
+    const unit1 = rangeMatch[2] || unit2;
+    const min = parseAmount(rangeMatch[1], unit1);
+    const max = parseAmount(rangeMatch[3], unit2);
+    if (min !== null && max !== null) {
+      return { type: 'RANGE', minPrice: Math.min(min, max), maxPrice: Math.max(min, max) };
+    }
+  }
+
+  // 2. Trên / Lớn hơn / Từ X trở lên: 'tren 5 tr', 'tren 5 trieu', 'hon 3tr', 'tu 2 trieu tro len'
+  const minMatch = norm.match(/(?:tren|hon|lon hon|tu)\s*(\d+(?:\.\d+)?)\s*(k|nghin|ngan|tr|trieu)?(?:\s*tro len)?/);
+  if (minMatch && (norm.includes('tren') || norm.includes('hon') || norm.includes('tro len') || norm.includes('lon hon'))) {
+    const unit = minMatch[2] || 'trieu';
+    const min = parseAmount(minMatch[1], unit);
+    if (min !== null) return { type: 'MIN', minPrice: min };
+  }
+
+  // 3. Dưới / Nhỏ hơn / Tối đa: 'duoi 500k', 'duoi 1 trieu', 'nho hon 2tr'
+  const maxMatch = norm.match(/(?:duoi|nho hon|it hon|toi da)\s*(\d+(?:\.\d+)?)\s*(k|nghin|ngan|tr|trieu)?/);
+  if (maxMatch) {
+    const unit = maxMatch[2] || (parseFloat(maxMatch[1]) < 100 ? 'trieu' : 'k');
+    const max = parseAmount(maxMatch[1], unit);
+    if (max !== null) return { type: 'MAX', maxPrice: max };
+  }
+
+  // 4. Khoảng / Tầm: 'khoang 500k', 'tam 1 trieu'
+  const approxMatch = norm.match(/(?:khoang|tam|tuan gia)\s*(\d+(?:\.\d+)?)\s*(k|nghin|ngan|tr|trieu)?/);
+  if (approxMatch) {
+    const unit = approxMatch[2] || (parseFloat(approxMatch[1]) < 100 ? 'trieu' : 'k');
+    const val = parseAmount(approxMatch[1], unit);
+    if (val !== null) return { type: 'APPROX', minPrice: val * 0.7, maxPrice: val * 1.3, target: val };
+  }
+
+  return null;
+}
+
 // Khớp sản phẩm thông minh dựa trên cả định danh, thương hiệu và ngữ cảnh
 function findProductsByQuery(query, products) {
   const normQuery = removeVietnameseTones(query);
@@ -645,25 +703,56 @@ async function generateVerifiedResponse({ message, products, coupons, userOrderC
     return { reply, products: matchedProducts.slice(0, 3), suggestions: ['Kem chống nắng nhạy cảm', 'Sữa rửa mặt dịu nhẹ', 'Serum phục hồi B5'], provider: 'Blushé Smart AI Engine' };
   }
 
-  // L. TÌM KIẾM THEO NGÂN SÁCH
-  if (normMsg.includes('duoi 200') || normMsg.includes('duoi 300') || normMsg.includes('duoi 500') || normMsg.includes('duoi 1 trieu') || normMsg.includes('ngan sach')) {
-    let maxPrice = 500000;
-    if (normMsg.includes('200')) maxPrice = 200000;
-    else if (normMsg.includes('300')) maxPrice = 300000;
-    else if (normMsg.includes('400')) maxPrice = 400000;
-    else if (normMsg.includes('500')) maxPrice = 500000;
-    else if (normMsg.includes('1 trieu') || normMsg.includes('1tr')) maxPrice = 1000000;
+  // L. TÌM KIẾM THEO NGÂN SÁCH / KHOẢNG GIÁ (TRÊN, DƯỚI, TỪ ... ĐẾN ...)
+  const priceFilter = parsePriceQuery(resolvedQuery);
+  if (priceFilter) {
+    let filtered = [];
+    let priceDesc = '';
 
-    matchedProducts = products.filter(p => p.salePrice <= maxPrice && p.stock > 0);
-    if (matchedProducts.length > 0) {
-      reply = `Dạ với mức ngân sách dưới **${formatVND(maxPrice)}**, em đã chọn lọc các sản phẩm chất lượng cao, đang còn sẵn hàng tại Blushé Beauty dành cho bạn:\n\n` +
-        matchedProducts.map(p => `• **${p.name}** - Giá: **${formatVND(p.salePrice)}** (${p.skinType || 'Mọi loại da'}, còn ${p.stock} sản phẩm)`).join('\n') +
-        `\n\nTất cả sản phẩm đều có thành phần hữu cơ an toàn. Bạn xem chi tiết sản phẩm bên dưới nhé! 🌿`;
-    } else {
-      reply = `Dạ với ngân sách dưới ${formatVND(maxPrice)}, hiện các sản phẩm trong tầm giá này đang tạm hết hàng. Em xin giới thiệu các sản phẩm có mức giá gần nhất với chất lượng tối ưu nhất ạ! 🌸`;
-      matchedProducts = products.filter(p => p.stock > 0).sort((a, b) => a.salePrice - b.salePrice).slice(0, 3);
+    if (priceFilter.type === 'MIN') {
+      filtered = products.filter(p => p.salePrice >= priceFilter.minPrice);
+      priceDesc = `trên **${formatVND(priceFilter.minPrice)}**`;
+    } else if (priceFilter.type === 'MAX') {
+      filtered = products.filter(p => p.salePrice <= priceFilter.maxPrice);
+      priceDesc = `dưới **${formatVND(priceFilter.maxPrice)}**`;
+    } else if (priceFilter.type === 'RANGE') {
+      filtered = products.filter(p => p.salePrice >= priceFilter.minPrice && p.salePrice <= priceFilter.maxPrice);
+      priceDesc = `từ **${formatVND(priceFilter.minPrice)}** đến **${formatVND(priceFilter.maxPrice)}**`;
+    } else if (priceFilter.type === 'APPROX') {
+      filtered = products.filter(p => p.salePrice >= priceFilter.minPrice && p.salePrice <= priceFilter.maxPrice);
+      priceDesc = `tầm **${formatVND(priceFilter.target)}**`;
     }
-    return { reply, products: matchedProducts.slice(0, 4), suggestions: ['Dưới 300k', 'Dưới 500k', 'Freeship từ bao nhiêu?'], provider: 'Blushé Smart AI Engine' };
+
+    filtered.sort((a, b) => b.salePrice - a.salePrice);
+
+    if (filtered.length > 0) {
+      reply = `Dạ tại Blushé Beauty hiện có **${filtered.length} sản phẩm** chính hãng với mức giá ${priceDesc} dành cho bạn:\n\n`;
+      filtered.forEach((p, idx) => {
+        const stockText = p.stock > 0 ? `Còn ${p.stock} sản phẩm` : `HẾT HÀNG ❌`;
+        reply += `${idx + 1}️⃣ **${p.name}** (${p.brand}):\n` +
+          `• Giá ưu đãi: **${formatVND(p.salePrice)}** (Giá gốc: ${formatVND(p.originalPrice)}) | Tồn kho: **${stockText}**\n` +
+          `• Dung tích: ${p.volume} - Phù hợp: ${p.skinType}\n` +
+          `• Công dụng: ${p.description}\n\n`;
+      });
+      reply += `Bạn có thể bấm vào thẻ sản phẩm bên dưới để xem chi tiết hoặc thêm vào giỏ hàng nhé! 🌿🌸`;
+      return {
+        reply,
+        products: filtered,
+        suggestions: ['Xem chi tiết', 'Mã giảm giá áp dụng', 'Chính sách Freeship'],
+        provider: 'Blushé Smart AI Engine'
+      };
+    } else {
+      reply = `Dạ hiện tại Blushé Beauty chưa có sản phẩm nào ở phân khúc giá ${priceDesc} ạ.\n\n` +
+        `Sản phẩm phân khúc cao cấp nhất tại shop hiện là **Kem Dưỡng Ẩm Phục Hồi Thần Kỳ La Mer Crème de la Mer** (${formatVND(5990000)}).\n` +
+        `Bạn có thể tham khảo các dòng sản phẩm cao cấp có sẵn tại shop bên dưới nhé! 🌸`;
+      const luxuryProducts = products.filter(p => p.stock > 0).sort((a, b) => b.salePrice - a.salePrice).slice(0, 3);
+      return {
+        reply,
+        products: luxuryProducts,
+        suggestions: ['Sản phẩm bán chạy', 'Mã giảm giá hôm nay'],
+        provider: 'Blushé Smart AI Engine'
+      };
+    }
   }
 
   // M. NẾU NGƯỜI DÙNG HỎI MUA MỘT SẢN PHẨM KHÔNG CÓ TRÊN HỆ THỐNG
@@ -714,9 +803,11 @@ exports.chatWithAI = async (req, res) => {
     const normMsg = removeVietnameseTones(trimmedMsg);
     const candidateProducts = findProductsByQuery(trimmedMsg, products);
     const isCompetitor = isCompetitorOrNonExistent(trimmedMsg);
+    const priceFilter = parsePriceQuery(trimmedMsg);
 
     const isDirectFactQuery =
       isCompetitor ||
+      priceFilter !== null ||
       candidateProducts.length > 0 ||
       normMsg.includes('nhung san pham gi') ||
       normMsg.includes('shop ban gi') ||
